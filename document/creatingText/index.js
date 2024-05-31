@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import {OrbitControls} from "../../node_modules/three/examples/jsm/controls/OrbitControls.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -13,6 +14,13 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.set(0, 0, 50);
 camera.lookAt(0, 0, 0);
+
+//创建鼠标控制器    
+let controls = new OrbitControls(camera, renderer.domElement );
+//监听控制器，每次拖动后重新渲染画面
+controls.addEventListener('change', function () {
+    renderer.render(scene, camera); //执行渲染操作
+});
 
 document.body.appendChild(renderer.domElement);
 
