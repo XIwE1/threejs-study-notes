@@ -25,33 +25,12 @@ controls.addEventListener("change", function () {
   renderer.render(scene, camera); //执行渲染操作
 });
 
-const loader = new GLTFLoader();
+const loader = new GLTFLoader().setPath("./public/");
 loader.load(
-  "./public/scene.gltf",
+  "scene.gltf",
   function (gltf) {
-    // scene.add(gltf.scene);
     console.log("gltf", gltf);
     let model = gltf.scene;
-    // 添加以下代码
-    // 遍历模型
-    model.traverse((child, index) => {
-      if (!child.isMesh) return;
-      // 将图片作为纹理加载hair.texture_emissive
-      console.log("index", index);
-      console.log("images", gltf.parser.json.images);
-      console.log("materials", gltf.parser.json.materials);
-      let imgTexture = new THREE.TextureLoader().load(
-        "./public/textures/hair.texture_emissive.png"
-      );
-      // 调整纹理图的方向
-      imgTexture.flipY = false;
-      // 将纹理图生成材质
-      const material = new THREE.MeshBasicMaterial({
-        map: imgTexture,
-      });
-      child.material = material;
-    });
-
     scene.add(model);
   },
   undefined,
