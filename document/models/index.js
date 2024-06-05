@@ -11,26 +11,41 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 0, 10);
+camera.position.set(5, 5, 5);
 camera.lookAt(0, 0, 0);
 // camera.position.z = 10;
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+// 创建坐标辅助器
+const axesHelper = new THREE.AxesHelper(5);
+scene.add(axesHelper);
 
-//创建鼠标控制器
+// 创建鼠标控制器
 let controls = new OrbitControls(camera, renderer.domElement);
-//监听控制器，每次拖动后重新渲染画面
+// controls.autoRotate = true;
+// controls.enableDamping = true;
+// 监听控制器，每次拖动后重新渲染画面
 controls.addEventListener("change", function () {
   renderer.render(scene, camera); //执行渲染操作
 });
 
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+cube.position.set(2, 0, 0);
+
 const loader = new GLTFLoader().setPath("./public/");
+let model;
 loader.load(
   "scene.gltf",
   function (gltf) {
     console.log("gltf", gltf);
-    let model = gltf.scene;
+    model = gltf.scene;
+    model.position.set(-2, 0, 0);
+    model.scale.set(2, 2, 2);
+    model.rotation.set(0, -Math.PI / 4, 0, 'XYZ');
+    model.add(cube);
     scene.add(model);
   },
   undefined,
@@ -42,7 +57,27 @@ loader.load(
 document.body.appendChild(renderer.domElement);
 
 function animate() {
-  requestAnimationFrame(animate);
+  controls.update();
+  if (model) {
+    model.position.x += 0.01;
+    model.rotation.y += 0.01;
+    if (model.position.x > 2) {
+      model.position.x = -2;
+    }
+  }
   renderer.render(scene, camera);
+  requestAnimationFrame(animate);
 }
 animate();
+
+const reset_button = document.createElement("div");
+reset_button.classList.add("reset_button");
+reset_button.innerText = "重置";
+document.body.appendChild(reset_button);
+reset_button.onclick = function () {
+  reset();
+};
+
+function reset() {
+  controls.reset();
+}
