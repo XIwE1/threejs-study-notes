@@ -44,7 +44,7 @@ loader.load(
     model = gltf.scene;
     model.position.set(-2, 0, 0);
     model.scale.set(2, 2, 2);
-    model.rotation.set(0, -Math.PI / 4, 0, 'XYZ');
+    // model.rotation.set(0, -Math.PI / 4, 0, "XYZ");
     model.add(cube);
     scene.add(model);
   },
@@ -56,15 +56,21 @@ loader.load(
 
 document.body.appendChild(renderer.domElement);
 
+window.onresize = () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.updateProjectionMatrix();
+};
+
 function animate() {
   controls.update();
-  if (model) {
-    model.position.x += 0.01;
-    model.rotation.y += 0.01;
-    if (model.position.x > 2) {
-      model.position.x = -2;
-    }
-  }
+  // if (model) {
+  //   model.position.x += 0.01;
+  //   model.rotation.y += 0.01;
+  //   if (model.position.x > 2) {
+  //     model.position.x = -2;
+  //   }
+  // }
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
