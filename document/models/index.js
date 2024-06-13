@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#eee");
+scene.background = new THREE.Color("#494141");
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -31,8 +31,15 @@ controls.addEventListener("change", function () {
   renderer.render(scene, camera); //执行渲染操作
 });
 
+// 创建光源
+const color = 0xFFFFFF;
+const intensity = 3;
+const light = new THREE.DirectionalLight(color, intensity);
+light.position.set(-1, 2, 4);
+scene.add(light);
+
 const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 });
 const cube = new THREE.Mesh(geometry, material);
 cube.position.set(2, 0, 0);
 
@@ -67,12 +74,14 @@ window.onresize = () => {
 function animate() {
   controls.update();
   if (model) {
-    //   model.position.x += 0.01;
-    //   model.rotation.y += 0.01;
-    //   if (model.position.x > 2) {
-    //     model.position.x = -2;
-    //   }
+      // model.position.x += 0.01;
+      // model.rotation.y += 0.01;
+      // if (model.position.x > 2) {
+      //   model.position.x = -2;
+      // }
   }
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
