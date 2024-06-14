@@ -41,7 +41,7 @@ scene.add(light);
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 const material = new THREE.MeshPhongMaterial({ color: 0x44aa88 });
 const cube = new THREE.Mesh(geometry, material);
-cube.position.set(2, 0, 0);
+cube.position.set(2.5, 0, 0);
 
 const loader = new GLTFLoader().setPath("./public/");
 let model;
@@ -63,6 +63,19 @@ loader.load(
   }
 );
 
+// 球体-点材质
+const radius = 1;
+const widthSegments = 16;
+const heightSegments = 8;
+const sphere_geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+const point_material = new THREE.PointsMaterial({
+    color: '#ffd1d1',
+    size: 0.05,     // in world units
+});
+const points = new THREE.Points(sphere_geometry, point_material);
+points.position.set(0, 0, 1);
+scene.add(points);
+
 document.body.appendChild(renderer.domElement);
 
 window.onresize = () => {
@@ -82,6 +95,7 @@ function animate() {
   }
   cube.rotation.x += 0.01;
   cube.rotation.y += 0.01;
+  points.rotation.y += 0.01;
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
