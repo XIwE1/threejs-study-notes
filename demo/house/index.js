@@ -88,26 +88,15 @@ const groundGroup = new THREE.Group();
   });
   const roundMesh = new THREE.Mesh(roundGeometry, roundMaterial);
   roundMesh.receiveShadow = true;
+  roundMesh.rotateX(Math.PI * -0.5);
   groundGroup.add(roundMesh);
   // 放入模型
-  //   gltfLoader.load("house.glb", function (glb) {
-  //     console.log("glb", glb);
-  //     const model = glb.scene;
-  //     model.rotateX(Math.PI * 0.5);
-  //     model.position.set(28, 0, 12.5);
-  //     model.scale.set(0.8, 0.8, 0.8);
-  //     model.receiveShadow = true;
-  //     model.castShadow = true;
-  //     model.updateMatrix();
-  //     groundGroup.add(model);
-  //   });
   gltfLoader.load("house.glb", function (glb) {
     console.log("glb", glb);
     const model = glb.scene;
-    console.log("model", model);
     model.traverse((child) => {
       if (child.isMesh) {
-        console.log('child.material.map', child.material.map);
+        console.log("child.material.map", child.material.map);
 
         child.castShadow = true;
         child.renderOrder = 1;
@@ -126,17 +115,88 @@ const groundGroup = new THREE.Group();
         // child.material.needsUpdate = true;
       }
     });
-    model.position.set(20, 12.5, 0);
+    model.position.set(15, 12.5, -10);
     model.scale.set(0.8, 0.8, 0.8);
     model.receiveShadow = true;
     model.castShadow = true;
     scene.add(model);
   });
-  gltfLoader.load("block.glb", function (glb) {
+  gltfLoader.load("wolf.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(5, 4, 1);
+    model.position.set(5, 0.5, 15);
+    model.rotateY(Math.PI * 0.5);
+    model.scale.set(0.05, 0.05, 0.05);
     model.receiveShadow = true;
     model.castShadow = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+      }
+    });
+    groundGroup.add(model);
+  });
+  gltfLoader.load("grass.glb", function (glb) {
+    const model = glb.scene;
+    model.position.set(5, 1, 10);
+    model.receiveShadow = true;
+    model.castShadow = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+      }
+    });
+    groundGroup.add(model);
+  });
+  gltfLoader.load("flower.glb", function (glb) {
+    const model = glb.scene;
+    model.position.set(10, 0, 10);
+    model.rotateY(Math.PI * 0.5);
+    model.receiveShadow = true;
+    model.castShadow = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+      }
+    });
+    groundGroup.add(model);
+  });
+  gltfLoader.load("bench.glb", function (glb) {
+    const model = glb.scene;
+    model.position.set(0, 0, -5);
+    model.receiveShadow = true;
+    model.castShadow = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+      }
+    });
+    groundGroup.add(model);
+  });
+  gltfLoader.load("custom_house.glb", function (glb) {
+    const model = glb.scene;
+    model.position.set(22, 6.02, 10);
+    model.rotateY(Math.PI * 0.5);
+    model.scale.set(0.5, 0.5, 0.5);
+    model.receiveShadow = true;
+    model.castShadow = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.material.side = THREE.DoubleSide;
+      }
+    });
+    groundGroup.add(model);
+  });
+  gltfLoader.load("block.glb", function (glb) {
+    const model = glb.scene;
+    model.position.set(5, 0, 1);
+    model.receiveShadow = true;
+    model.castShadow = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+      }
+    });
     groundGroup.add(model);
   });
   gltfLoader.load("village.glb", function (glb) {
@@ -147,8 +207,8 @@ const groundGroup = new THREE.Group();
         // child.receiveShadow = true;
       }
     });
-    model.rotateX(Math.PI * 0.5);
-    model.position.set(-22, 0, 8.01);
+    // model.rotateX(Math.PI * 0.5);
+    model.position.set(-22, 8.01, 0);
     model.receiveShadow = true;
     model.castShadow = true;
     model.renderOrder = 1;
@@ -156,8 +216,8 @@ const groundGroup = new THREE.Group();
   });
   gltfLoader.load("steve.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(0, 0, 1.18);
-    model.rotateX(Math.PI * 0.5);
+    model.position.set(0, 1.18, 1.18);
+    // model.rotateX(Math.PI * 0.5);
     model.scale.set(0.002, 0.002, 0.002);
     model.receiveShadow = true;
     model.castShadow = true;
@@ -167,7 +227,7 @@ const groundGroup = new THREE.Group();
   });
 }
 
-groundGroup.rotation.x = Math.PI * -0.5;
+// groundGroup.rotation.x = Math.PI * -0.5;
 
 scene.add(groundGroup);
 
