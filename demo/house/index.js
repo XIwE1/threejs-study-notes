@@ -11,7 +11,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 8, 20);
+camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer();
@@ -30,18 +30,27 @@ const cubes = [];
 
 {
   const geometry = new THREE.BoxGeometry(2, 2, 2);
-  const material = new THREE.MeshPhongMaterial({ color: "lightblue" });
+  const material = new THREE.MeshPhysicalMaterial({
+    // transparent: true,
+    opacity: 0.8,
+    // depthWrite: false,
+    // depthTest: true,
+    transmission: 0.8,
+  });
   const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(0, 25, 0);
   cubes.push(mesh);
-  //   scene.add(mesh);
+  scene.add(mesh);
 }
+// 增加半球光
 {
   const skyColor = 0xb1e1ff; // light blue
-  const groundColor = 0xb97a20; // brownish orange
+  const groundColor = 0x000000; // brownish orange
   const intensity = 10;
   const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
   scene.add(light);
 }
+
 function makePointLight(color, intensity, position, castShadow, container) {
   const light = new THREE.PointLight(color, intensity);
   light.castShadow = castShadow;
@@ -51,10 +60,26 @@ function makePointLight(color, intensity, position, castShadow, container) {
   container.add(helper);
 }
 
-makePointLight(0xffffff, 10000, [0, 30, 15], true, scene);
+makePointLight(0xffffff, 10000, [0, 40, 0], true, scene);
+
+// {
+//   const color = 0xffffff;
+//   const intensity = 10;
+//   const light = new THREE.DirectionalLight(color, intensity);
+//   light.castShadow = true;
+//   light.position.set(0, 30, 30);
+//   light.target.position.set(0, 0, 0);
+//   const helper = new THREE.DirectionalLightHelper(light);
+//   scene.add(light);
+//   scene.add(light.target);
+//   scene.add(helper);
+// }
 
 // https://juejin.cn/post/7265322117771624509
 const gltfLoader = new GLTFLoader().setPath("./models/");
+
+const sceneWidth = 80;
+const sceneHeight = 60;
 // 地面
 const groundGroup = new THREE.Group();
 // {
@@ -71,8 +96,8 @@ const groundGroup = new THREE.Group();
 // }
 {
   // 生成地板
-  const groundWidth = 80;
-  const groundHeight = 60;
+  const groundWidth = sceneWidth;
+  const groundHeight = sceneHeight;
 
   const roundTexture = new THREE.TextureLoader().load("./texture/floor2.png");
   roundTexture.wrapS = THREE.RepeatWrapping;
@@ -96,17 +121,16 @@ const groundGroup = new THREE.Group();
     const model = glb.scene;
     model.traverse((child) => {
       if (child.isMesh) {
-        console.log("child.material.map", child.material.map);
-
         child.castShadow = true;
         child.renderOrder = 1;
         child.matrixWorldNeedsUpdate = true;
+        child.material.reflectivity = 1;
         // console.log("child", child);
         // child.receiveShadow = true;
         // child.material.flatShading = true;
         // child.material.wireframe = true;
         // child.material.roughness = 0.5;
-        // child.material.metalness = 0.5;
+        child.material.metalness = 0.5;
         // child.material.emissive = 'green';
         // child.material.alphaHash = true;
         // child.material.alphaTest = 0.5;
@@ -183,6 +207,8 @@ const groundGroup = new THREE.Group();
       if (child.isMesh) {
         child.castShadow = true;
         child.material.side = THREE.DoubleSide;
+        child.material.depthWrite = true;
+        child.material.depthTest = true;
       }
     });
     groundGroup.add(model);
@@ -204,10 +230,10 @@ const groundGroup = new THREE.Group();
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
+        child.material.reflectivity = 1;
         // child.receiveShadow = true;
       }
     });
-    // model.rotateX(Math.PI * 0.5);
     model.position.set(-22, 8.01, 0);
     model.receiveShadow = true;
     model.castShadow = true;
@@ -227,9 +253,106 @@ const groundGroup = new THREE.Group();
   });
 }
 
-// groundGroup.rotation.x = Math.PI * -0.5;
+// 天空
+const skyGroup = new THREE.Group();
+skyGroup.position.set(0, 30, 0);
+{
+  //
+  const skyWidth = sceneWidth;
+  const skyHeight = sceneHeight;
 
+  const skyGeometry = new THREE.PlaneGeometry(skyWidth, skyHeight);
+  const skyMaterial = new THREE.MeshBasicMaterial({
+    color: "rgb(141,174,252)",
+    side: THREE.DoubleSide,
+  });
+  const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
+  skyMesh.rotateX(Math.PI * -0.5);
+  // skyGroup.add(skyMesh);
+
+  //太阳
+  {
+    const sunSize = 5;
+    const sunColor = 0xffffff;
+    const sunGeoMetry = new THREE.PlaneGeometry(sunSize, sunSize);
+    const sunMaterial = new THREE.MeshBasicMaterial({
+      color: sunColor,
+      side: THREE.DoubleSide,
+      renderOrder: 1,
+    });
+    const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
+    sunMesh.position.set(0, -0.1, 0);
+    sunMesh.rotateX(Math.PI * -0.5);
+    skyGroup.add(sunMesh);
+  }
+  // 云
+  const cloudPaths = [
+    "cloud.glb",
+    "cloud2.glb",
+    "cloud3.glb",
+    "cloud4.glb",
+    "cloud5.glb",
+    "cloud6.glb",
+  ];
+  const loadModel = (path) =>
+    new Promise((resolve) => {
+      gltfLoader.load(path, function (glb) {
+        const model = glb.scene;
+        console.log("model", model);
+        resolve(model);
+      });
+    });
+  {
+    const allModels = cloudPaths.map((path) => loadModel(path));
+    console.log("allModels", allModels);
+    Promise.all(allModels).then((models) => {
+      console.log("models", models);
+      models.forEach((model) => {
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.material = new THREE.MeshPhysicalMaterial({
+              // transparent: true,
+              // opacity: 0.8,
+              // depthWrite: false,
+              // depthTest: true,
+              transmission: 0.8,
+            });
+          }
+        });
+        const _model = model.clone();
+        _model.position.set(
+          Math.random() * skyWidth - skyWidth / 2,
+          -1.18,
+          Math.random() * skyHeight - skyHeight / 2
+        );
+        model.position.set(
+          Math.random() * skyWidth - skyWidth / 2,
+          -1.18,
+          Math.random() * skyHeight - skyHeight / 2
+        );
+        _model.rotateY(Math.PI * 0.5);
+        model.castShadow = true;
+        model.receiveShadow = true;
+        skyGroup.add(_model);
+        skyGroup.add(model);
+      });
+    });
+  }
+  // {
+  //   gltfLoader.load("cloud.glb", function (glb) {
+  //     const model = glb.scene;
+  //     model.position.set(0, -1.18, 1.18);
+  //     model.castShadow = true;
+  //     skyGroup.add(model);
+  //   });
+  // }
+}
+
+// 放入模型
 scene.add(groundGroup);
+scene.add(skyGroup);
 
 function animate() {
   requestAnimationFrame(animate);
