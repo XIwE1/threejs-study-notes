@@ -1,6 +1,7 @@
 import * as THREE from "../../node_modules/three/build/three.module.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
@@ -11,8 +12,16 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
+const personCamera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.5,
+  20
+);
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
+const cameraHelper = new THREE.CameraHelper( camera );
+const cameraHelper2 = new THREE.CameraHelper( personCamera );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -20,9 +29,11 @@ renderer.shadowMap.enabled = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
 const controls = new OrbitControls(camera, renderer.domElement);
-
+controls.update();
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
+scene.add( cameraHelper );
+scene.add( cameraHelper2 );
 
 document.body.appendChild(renderer.domElement);
 
@@ -80,8 +91,12 @@ const gltfLoader = new GLTFLoader().setPath("./models/");
 
 const sceneWidth = 80;
 const sceneHeight = 60;
+// 人物模型
+let steveModel;
 // 地面
 const groundGroup = new THREE.Group();
+const personGroup = new THREE.Group();
+groundGroup.add(personGroup);
 // {
 //   const color = 0xffffff;
 //   const intensity = 10000;
@@ -196,23 +211,23 @@ const groundGroup = new THREE.Group();
     });
     groundGroup.add(model);
   });
-  gltfLoader.load("custom_house.glb", function (glb) {
-    const model = glb.scene;
-    model.position.set(22, 6.02, 10);
-    model.rotateY(Math.PI * 0.5);
-    model.scale.set(0.5, 0.5, 0.5);
-    model.receiveShadow = true;
-    model.castShadow = true;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.material.side = THREE.DoubleSide;
-        child.material.depthWrite = true;
-        child.material.depthTest = true;
-      }
-    });
-    groundGroup.add(model);
-  });
+  // gltfLoader.load("custom_house.glb", function (glb) {
+  //   const model = glb.scene;
+  //   model.position.set(22, 6.02, 10);
+  //   model.rotateY(Math.PI * 0.5);
+  //   model.scale.set(0.5, 0.5, 0.5);
+  //   model.receiveShadow = true;
+  //   model.castShadow = true;
+  //   model.traverse((child) => {
+  //     if (child.isMesh) {
+  //       child.castShadow = true;
+  //       child.material.side = THREE.DoubleSide;
+  //       child.material.depthWrite = true;
+  //       child.material.depthTest = true;
+  //     }
+  //   });
+  //   groundGroup.add(model);
+  // });
   gltfLoader.load("block.glb", function (glb) {
     const model = glb.scene;
     model.position.set(5, 0, 1);
@@ -242,14 +257,33 @@ const groundGroup = new THREE.Group();
   });
   gltfLoader.load("steve.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(0, 1.18, 1.18);
-    // model.rotateX(Math.PI * 0.5);
     model.scale.set(0.002, 0.002, 0.002);
     model.receiveShadow = true;
     model.castShadow = true;
     model.renderOrder = 1;
     model.matrixWorldNeedsUpdate = true;
-    groundGroup.add(model);
+    personGroup.add(model);
+
+    // 瞄准的基准点
+    const targetElevation = new THREE.Object3D();
+    targetElevation.position.set(0, 0.98, 5);
+    const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+    const material = new THREE.MeshBasicMaterial({
+      color: "red",
+    });
+    const cube = new THREE.Mesh(geometry, material);
+    targetElevation.add(cube);
+    personGroup.add(targetElevation);
+    console.log('model', model);
+    const {x, y, z} = model.position
+    personCamera.position.set(x, y + 2, z);
+    const [cubeX, cubeY, cubeZ] = cube.getWorldPosition(new THREE.Vector3());
+    console.log('cubeX, cubeY, cubeZ', cubeX, cubeY, cubeZ);
+    personCamera.lookAt(cubeX, personCamera.position.y, cubeZ);
+    personCamera.updateMatrixWorld();
+
+    personGroup.position.set(0, 1.18, 0);
+    // personGroup.rotateY(Math.PI * 0.5);
   });
 }
 
@@ -278,7 +312,6 @@ skyGroup.position.set(0, 30, 0);
     const sunMaterial = new THREE.MeshBasicMaterial({
       color: sunColor,
       side: THREE.DoubleSide,
-      renderOrder: 1,
     });
     const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
     sunMesh.position.set(0, -0.1, 0);
@@ -350,19 +383,35 @@ skyGroup.position.set(0, 30, 0);
   // }
 }
 
+let renderCamera = camera;
+
+// 创建GUI
+const gui = new GUI();
+// 添加按钮 function类型案例
+gui.add(renderer, "renderType", ["first", "third"]).name("切换视角").onChange((val) => {
+  if (val === "first") {
+    renderCamera = personCamera;
+    controls.enabled = false;
+  } else if (val === "third") {
+    renderCamera = camera;
+    controls.enabled = true;
+  }
+  const cameraMap = {
+    first: personCamera,
+    third: camera,
+  }
+  renderCamera = cameraMap[val];
+});
+
 // 放入模型
 scene.add(groundGroup);
 scene.add(skyGroup);
 
 function animate() {
   requestAnimationFrame(animate);
-  //   {
-  //     cubes.forEach((cube) => {
-  //       cube.rotation.x += 0.01;
-  //       cube.rotation.y += 0.01;
-  //     });
-  //   }
-  renderer.render(scene, camera);
+  renderer.render(scene, renderCamera);
 }
 
 animate();
+
+

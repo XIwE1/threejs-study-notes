@@ -7,14 +7,32 @@
   </head>
   <style>
     body {
+      position: relative;
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
     }
+    .controls {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+    }
+    .click-button {
+      margin: 5px;
+      padding: 5px;
+      color: white;
+      border-radius: 5px;
+      background-color: rgb(51, 58, 39);
+    }
   </style>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <aside class="controls">
+        <!-- <span class="click-button" onclick="toggleView('first')">切换第一视角</span>
+        <span class="click-button" onclick="toggleView('third')">切换第三视角</span> -->
+      </aside>
+    </div>
     <script type="module" src="./index.js"></script>
   </body>
 </html>
