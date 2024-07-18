@@ -16,12 +16,12 @@ const personCamera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.5,
-  20
+  100
 );
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
-const cameraHelper = new THREE.CameraHelper( camera );
-const cameraHelper2 = new THREE.CameraHelper( personCamera );
+const cameraHelper = new THREE.CameraHelper(camera);
+const cameraHelper2 = new THREE.CameraHelper(personCamera);
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -29,11 +29,12 @@ renderer.shadowMap.enabled = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
 const controls = new OrbitControls(camera, renderer.domElement);
+// const controls2 = new OrbitControls(personCamera, renderer.domElement);
 controls.update();
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
-scene.add( cameraHelper );
-scene.add( cameraHelper2 );
+scene.add(cameraHelper);
+scene.add(cameraHelper2);
 
 document.body.appendChild(renderer.domElement);
 
@@ -274,11 +275,12 @@ groundGroup.add(personGroup);
     const cube = new THREE.Mesh(geometry, material);
     targetElevation.add(cube);
     personGroup.add(targetElevation);
-    console.log('model', model);
-    const {x, y, z} = model.position
+    console.log("model", model);
+    
+    const { x, y, z } = model.position;
     personCamera.position.set(x, y + 2, z);
     const [cubeX, cubeY, cubeZ] = cube.getWorldPosition(new THREE.Vector3());
-    console.log('cubeX, cubeY, cubeZ', cubeX, cubeY, cubeZ);
+    console.log("cubeX, cubeY, cubeZ", cubeX, cubeY, cubeZ);
     personCamera.lookAt(cubeX, personCamera.position.y, cubeZ);
     personCamera.updateMatrixWorld();
 
@@ -388,30 +390,70 @@ let renderCamera = camera;
 // 创建GUI
 const gui = new GUI();
 // 添加按钮 function类型案例
-gui.add(renderer, "renderType", ["first", "third"]).name("切换视角").onChange((val) => {
-  if (val === "first") {
-    renderCamera = personCamera;
-    controls.enabled = false;
-  } else if (val === "third") {
-    renderCamera = camera;
-    controls.enabled = true;
-  }
-  const cameraMap = {
-    first: personCamera,
-    third: camera,
-  }
-  renderCamera = cameraMap[val];
-});
+gui
+  .add(renderer, "renderType", ["first", "third"])
+  .name("切换视角")
+  .onChange((val) => {
+    if (val === "first") {
+      renderCamera = personCamera;
+      controls.enabled = false;
+      // controls2.enabled = true;
+    } else if (val === "third") {
+      renderCamera = camera;
+      controls.enabled = true;
+      // controls2.enabled = false;
+    }
+    const cameraMap = {
+      first: personCamera,
+      third: camera,
+    };
+    renderCamera = cameraMap[val];
+  });
 
 // 放入模型
 scene.add(groundGroup);
 scene.add(skyGroup);
 
+// 定义移动速度
+const moveSpeed = 0.1;
+
+// 键盘状态
+const keyStates = {
+  w: false,
+  s: false,
+  a: false,
+  d: false,
+  ArrowUp: false,
+  ArrowDown: false,
+  ArrowLeft: false,
+  ArrowRight: false,
+};
+
+// 监听键盘事件
+document.addEventListener("keydown", (event) => {
+  keyStates[event.key] = true;
+});
+
+document.addEventListener("keyup", (event) => {
+  keyStates[event.key] = false;
+});
+
 function animate() {
   requestAnimationFrame(animate);
+  // 根据键盘状态移动物体
+  if (keyStates["w"] || keyStates["ArrowUp"]) {
+    personGroup.position.z += moveSpeed;
+  }
+  if (keyStates["s"] || keyStates["ArrowDown"]) {
+    personGroup.position.z -= moveSpeed;
+  }
+  if (keyStates["a"] || keyStates["ArrowLeft"]) {
+    personGroup.position.x += moveSpeed;
+  }
+  if (keyStates["d"] || keyStates["ArrowRight"]) {
+    personGroup.position.x -= moveSpeed;
+  }
   renderer.render(scene, renderCamera);
 }
 
 animate();
-
-
