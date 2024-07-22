@@ -3,6 +3,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 
+const sceneWidth = 80;
+const sceneHeight = 60;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
 
@@ -16,7 +18,7 @@ const personCamera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.5,
-  100
+  30
 );
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
@@ -72,44 +74,36 @@ function makePointLight(color, intensity, position, castShadow, container) {
   container.add(helper);
 }
 
-makePointLight(0xffffff, 10000, [0, 40, 0], true, scene);
+// makePointLight(0xffffff, 10000, [0, 40, 15], true, scene);
 
-// {
-//   const color = 0xffffff;
-//   const intensity = 10;
-//   const light = new THREE.DirectionalLight(color, intensity);
-//   light.castShadow = true;
-//   light.position.set(0, 30, 30);
-//   light.target.position.set(0, 0, 0);
-//   const helper = new THREE.DirectionalLightHelper(light);
-//   scene.add(light);
-//   scene.add(light.target);
-//   scene.add(helper);
-// }
+// 方向光 模拟太阳
+{
+  const color = 0xffffff;
+  const intensity = 10;
+  const light = new THREE.DirectionalLight(color, intensity);
+  console.log('light', light);
+  light.castShadow = true;
+  light.shadow.camera.left = sceneWidth / -2;
+  light.shadow.camera.right = sceneWidth / 2;
+  light.shadow.camera.top = sceneHeight / -2;
+  light.shadow.camera.bottom = sceneHeight / 2;
+  light.shadow.camera.far = 70;
+  light.position.set(0, 40, 10);
+  light.target.position.set(0, 0, 0);
+  const helper = new THREE.DirectionalLightHelper(light);
+  const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
+  scene.add(cameraHelper);
+  scene.add(light);
+  scene.add(helper);
+}
 
 // https://juejin.cn/post/7265322117771624509
 const gltfLoader = new GLTFLoader().setPath("./models/");
 
-const sceneWidth = 80;
-const sceneHeight = 60;
-// 人物模型
-let steveModel;
 // 地面
 const groundGroup = new THREE.Group();
 const personGroup = new THREE.Group();
 groundGroup.add(personGroup);
-// {
-//   const color = 0xffffff;
-//   const intensity = 10000;
-//   const light = new THREE.PointLight(color, intensity);
-//   light.castShadow = true;
-//   light.position.set(-15, -20, 0);
-
-//   const helper = new THREE.PointLightHelper(light);
-
-//     groundGroup.add(light);
-//     groundGroup.add(helper);
-// }
 {
   // 生成地板
   const groundWidth = sceneWidth;
@@ -231,7 +225,7 @@ groundGroup.add(personGroup);
   // });
   gltfLoader.load("block.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(5, 0, 1);
+    model.position.set(15, 0, 1);
     model.receiveShadow = true;
     model.castShadow = true;
     model.traverse((child) => {
@@ -259,15 +253,21 @@ groundGroup.add(personGroup);
   gltfLoader.load("steve.glb", function (glb) {
     const model = glb.scene;
     model.scale.set(0.002, 0.002, 0.002);
+    model.position.set(0, 1.18, 0);
     model.receiveShadow = true;
     model.castShadow = true;
     model.renderOrder = 1;
     model.matrixWorldNeedsUpdate = true;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+      }
+    });
     personGroup.add(model);
 
     // 瞄准的基准点
     const targetElevation = new THREE.Object3D();
-    targetElevation.position.set(0, 0.98, 5);
+    targetElevation.position.set(0, 2, 5);
     const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
     const material = new THREE.MeshBasicMaterial({
       color: "red",
@@ -276,16 +276,13 @@ groundGroup.add(personGroup);
     targetElevation.add(cube);
     personGroup.add(targetElevation);
     console.log("model", model);
-    
-    const { x, y, z } = model.position;
-    personCamera.position.set(x, y + 2, z);
+
+    personGroup.add(personCamera);
+    personCamera.position.setY(2);
     const [cubeX, cubeY, cubeZ] = cube.getWorldPosition(new THREE.Vector3());
     console.log("cubeX, cubeY, cubeZ", cubeX, cubeY, cubeZ);
     personCamera.lookAt(cubeX, personCamera.position.y, cubeZ);
     personCamera.updateMatrixWorld();
-
-    personGroup.position.set(0, 1.18, 0);
-    // personGroup.rotateY(Math.PI * 0.5);
   });
 }
 
@@ -375,14 +372,6 @@ skyGroup.position.set(0, 30, 0);
       });
     });
   }
-  // {
-  //   gltfLoader.load("cloud.glb", function (glb) {
-  //     const model = glb.scene;
-  //     model.position.set(0, -1.18, 1.18);
-  //     model.castShadow = true;
-  //     skyGroup.add(model);
-  //   });
-  // }
 }
 
 let renderCamera = camera;
