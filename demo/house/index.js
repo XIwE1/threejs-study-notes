@@ -88,7 +88,7 @@ function makePointLight(color, intensity, position, castShadow, container) {
   light.shadow.camera.top = sceneHeight / -2;
   light.shadow.camera.bottom = sceneHeight / 2;
   light.shadow.camera.far = 70;
-  light.position.set(0, 40, 10);
+  light.position.set(0, 50, 15);
   light.target.position.set(0, 0, 0);
   const helper = new THREE.DirectionalLightHelper(light);
   const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
@@ -288,7 +288,7 @@ groundGroup.add(personGroup);
 
 // 天空
 const skyGroup = new THREE.Group();
-skyGroup.position.set(0, 30, 0);
+skyGroup.position.set(0, 40, 0);
 {
   //
   const skyWidth = sceneWidth;
@@ -301,7 +301,7 @@ skyGroup.position.set(0, 30, 0);
   });
   const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
   skyMesh.rotateX(Math.PI * -0.5);
-  // skyGroup.add(skyMesh);
+  skyGroup.add(skyMesh);
 
   //太阳
   {
