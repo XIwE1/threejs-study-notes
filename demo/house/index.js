@@ -81,14 +81,13 @@ function makePointLight(color, intensity, position, castShadow, container) {
   const color = 0xffffff;
   const intensity = 10;
   const light = new THREE.DirectionalLight(color, intensity);
-  console.log('light', light);
   light.castShadow = true;
   light.shadow.camera.left = sceneWidth / -2;
   light.shadow.camera.right = sceneWidth / 2;
   light.shadow.camera.top = sceneHeight / -2;
   light.shadow.camera.bottom = sceneHeight / 2;
   light.shadow.camera.far = 70;
-  light.position.set(0, 50, 15);
+  light.position.set(0, 50, 25);
   light.target.position.set(0, 0, 0);
   const helper = new THREE.DirectionalLightHelper(light);
   const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
@@ -157,7 +156,7 @@ groundGroup.add(personGroup);
   });
   gltfLoader.load("wolf.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(5, 0.5, 15);
+    model.position.set(0, 0.5, 15);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.05, 0.05, 0.05);
     model.receiveShadow = true;
@@ -257,6 +256,7 @@ groundGroup.add(personGroup);
     model.receiveShadow = true;
     model.castShadow = true;
     model.renderOrder = 1;
+    model.name = "steve";
     model.matrixWorldNeedsUpdate = true;
     model.traverse((child) => {
       if (child.isMesh) {
@@ -274,15 +274,16 @@ groundGroup.add(personGroup);
     });
     const cube = new THREE.Mesh(geometry, material);
     targetElevation.add(cube);
+    targetElevation.name = "targetElevation";
     personGroup.add(targetElevation);
-    console.log("model", model);
 
     personGroup.add(personCamera);
     personCamera.position.setY(2);
-    const [cubeX, cubeY, cubeZ] = cube.getWorldPosition(new THREE.Vector3());
-    console.log("cubeX, cubeY, cubeZ", cubeX, cubeY, cubeZ);
-    personCamera.lookAt(cubeX, personCamera.position.y, cubeZ);
+    personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
     personCamera.updateMatrixWorld();
+    personCamera.name = "personCamera";
+
+    console.log("personGroup", personGroup);
   });
 }
 
@@ -313,7 +314,7 @@ skyGroup.position.set(0, 40, 0);
       side: THREE.DoubleSide,
     });
     const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
-    sunMesh.position.set(0, -0.1, 0);
+    sunMesh.position.set(0, -0.1, 10);
     sunMesh.rotateX(Math.PI * -0.5);
     skyGroup.add(sunMesh);
   }
@@ -330,15 +331,12 @@ skyGroup.position.set(0, 40, 0);
     new Promise((resolve) => {
       gltfLoader.load(path, function (glb) {
         const model = glb.scene;
-        console.log("model", model);
         resolve(model);
       });
     });
   {
     const allModels = cloudPaths.map((path) => loadModel(path));
-    console.log("allModels", allModels);
     Promise.all(allModels).then((models) => {
-      console.log("models", models);
       models.forEach((model) => {
         model.traverse((child) => {
           if (child.isMesh) {
@@ -378,19 +376,26 @@ let renderCamera = camera;
 
 // 创建GUI
 const gui = new GUI();
-// 添加按钮 function类型案例
+const options = {
+  renderType: "third",
+};
 gui
-  .add(renderer, "renderType", ["first", "third"])
+  .add(options, "renderType", ["first", "third"])
   .name("切换视角")
   .onChange((val) => {
     if (val === "first") {
       renderCamera = personCamera;
       controls.enabled = false;
+      personGroup.rotation.y = 0;
+      personGroup.rotation.x = 0;
+
       // controls2.enabled = true;
     } else if (val === "third") {
       renderCamera = camera;
       controls.enabled = true;
       // controls2.enabled = false;
+      personGroup.rotation.y = 0;
+      personGroup.rotation.x = 0;
     }
     const cameraMap = {
       first: personCamera,
@@ -427,20 +432,49 @@ document.addEventListener("keyup", (event) => {
   keyStates[event.key] = false;
 });
 
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+// 监听鼠标移动事件
+document.addEventListener("mousemove", (event) => {
+  const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
+  const y_rotationAngle =
+    ((lastMouseX - mouseX) / window.innerWidth) * 3 * Math.PI;
+  personGroup.rotation.y += y_rotationAngle;
+
+  // const x_rotationAngle =
+  //   ((mouseY - lastMouseY) / window.innerHeight) * Math.PI;
+  // personCamera.rotation.x += x_rotationAngle;
+
+  // const x_rotationAngle =
+  //   ((window.innerHeight / 2 - mouseY) / window.innerHeight) * Math.PI;
+  // personCamera.rotation.x = x_rotationAngle;
+
+  lastMouseX = mouseX;
+  lastMouseY = mouseY;
+});
+
 function animate() {
   requestAnimationFrame(animate);
+  const y_rotationAngle = personGroup.rotation.y;
+  const sinMoveSpeed = Math.sin(y_rotationAngle);
+  const cosMoveSpeed = Math.cos(y_rotationAngle);
   // 根据键盘状态移动物体
   if (keyStates["w"] || keyStates["ArrowUp"]) {
-    personGroup.position.z += moveSpeed;
+    personGroup.position.z += moveSpeed * cosMoveSpeed;
+    personGroup.position.x += moveSpeed * sinMoveSpeed;
   }
   if (keyStates["s"] || keyStates["ArrowDown"]) {
-    personGroup.position.z -= moveSpeed;
+    personGroup.position.z -= moveSpeed * cosMoveSpeed;
+    personGroup.position.x -= moveSpeed * sinMoveSpeed;
   }
   if (keyStates["a"] || keyStates["ArrowLeft"]) {
-    personGroup.position.x += moveSpeed;
+    personGroup.position.z -= moveSpeed * sinMoveSpeed;
+    personGroup.position.x += moveSpeed * cosMoveSpeed;
   }
   if (keyStates["d"] || keyStates["ArrowRight"]) {
-    personGroup.position.x -= moveSpeed;
+    personGroup.position.z += moveSpeed * sinMoveSpeed;
+    personGroup.position.x -= moveSpeed * cosMoveSpeed;
   }
   renderer.render(scene, renderCamera);
 }
