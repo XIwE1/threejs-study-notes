@@ -18,7 +18,7 @@ const personCamera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.5,
-  30
+  100
 );
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
@@ -84,10 +84,10 @@ function makePointLight(color, intensity, position, castShadow, container) {
   light.castShadow = true;
   light.shadow.camera.left = sceneWidth / -2;
   light.shadow.camera.right = sceneWidth / 2;
-  light.shadow.camera.top = sceneHeight / -2;
-  light.shadow.camera.bottom = sceneHeight / 2;
-  light.shadow.camera.far = 70;
-  light.position.set(0, 50, 25);
+  light.shadow.camera.top = sceneHeight / -1;
+  light.shadow.camera.bottom = sceneHeight / 1;
+  light.shadow.camera.far = 90;
+  light.position.set(0, 60, 25);
   light.target.position.set(0, 0, 0);
   const helper = new THREE.DirectionalLightHelper(light);
   const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
@@ -261,6 +261,7 @@ groundGroup.add(personGroup);
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
+        child.side = THREE.DoubleSide;
       }
     });
     personGroup.add(model);
@@ -292,8 +293,8 @@ const skyGroup = new THREE.Group();
 skyGroup.position.set(0, 40, 0);
 {
   //
-  const skyWidth = sceneWidth;
-  const skyHeight = sceneHeight;
+  const skyWidth = 2 * sceneWidth;
+  const skyHeight = 2 * sceneHeight;
 
   const skyGeometry = new THREE.PlaneGeometry(skyWidth, skyHeight);
   const skyMaterial = new THREE.MeshBasicMaterial({
@@ -335,7 +336,8 @@ skyGroup.position.set(0, 40, 0);
       });
     });
   {
-    const allModels = cloudPaths.map((path) => loadModel(path));
+    let allModels = cloudPaths.map((path) => loadModel(path));
+    allModels = [...allModels, ...allModels, ...allModels, ...allModels]
     Promise.all(allModels).then((models) => {
       models.forEach((model) => {
         model.traverse((child) => {
@@ -432,8 +434,13 @@ document.addEventListener("keyup", (event) => {
   keyStates[event.key] = false;
 });
 
-let lastMouseX = 0;
-let lastMouseY = 0;
+let lastMouseX = window.innerWidth / 2;
+let lastMouseY = window.innerHeight / 2;
+const initialRotateX = personCamera.rotation.x;
+console.log("initialRotateX", initialRotateX);
+function radiansToDegrees(radians) {
+  return radians * (180 / Math.PI);
+}
 
 // 监听鼠标移动事件
 document.addEventListener("mousemove", (event) => {
@@ -442,13 +449,10 @@ document.addEventListener("mousemove", (event) => {
     ((lastMouseX - mouseX) / window.innerWidth) * 3 * Math.PI;
   personGroup.rotation.y += y_rotationAngle;
 
-  // const x_rotationAngle =
-  //   ((mouseY - lastMouseY) / window.innerHeight) * Math.PI;
-  // personCamera.rotation.x += x_rotationAngle;
-
-  // const x_rotationAngle =
-  //   ((window.innerHeight / 2 - mouseY) / window.innerHeight) * Math.PI;
-  // personCamera.rotation.x = x_rotationAngle;
+  const x_rotationAngle =
+    ((window.innerHeight / 2 - mouseY) / window.innerHeight) * 1.3 * -Math.PI;
+  const x_format_rotationAngle = Math.min(Math.max(x_rotationAngle, Math.PI / -2), Math.PI / 6);
+  personCamera.rotation.x = x_format_rotationAngle - Math.PI;
 
   lastMouseX = mouseX;
   lastMouseY = mouseY;
