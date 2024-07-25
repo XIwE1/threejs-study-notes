@@ -18,7 +18,7 @@ const personCamera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.5,
-  100
+  120
 );
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
@@ -283,18 +283,20 @@ groundGroup.add(personGroup);
     personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
     personCamera.updateMatrixWorld();
     personCamera.name = "personCamera";
-
-    console.log("personGroup", personGroup);
   });
 }
 
 // 天空
 const skyGroup = new THREE.Group();
 skyGroup.position.set(0, 40, 0);
+
+const cloudGroup = new THREE.Group();
+skyGroup.add(cloudGroup);
+
+const skyWidth = 2 * sceneWidth;
+const skyHeight = 2 * sceneHeight;
 {
   //
-  const skyWidth = 2 * sceneWidth;
-  const skyHeight = 2 * sceneHeight;
 
   const skyGeometry = new THREE.PlaneGeometry(skyWidth, skyHeight);
   const skyMaterial = new THREE.MeshBasicMaterial({
@@ -337,7 +339,7 @@ skyGroup.position.set(0, 40, 0);
     });
   {
     let allModels = cloudPaths.map((path) => loadModel(path));
-    allModels = [...allModels, ...allModels, ...allModels, ...allModels]
+    allModels = [...allModels, ...allModels, ...allModels, ...allModels];
     Promise.all(allModels).then((models) => {
       models.forEach((model) => {
         model.traverse((child) => {
@@ -367,8 +369,8 @@ skyGroup.position.set(0, 40, 0);
         _model.rotateY(Math.PI * 0.5);
         model.castShadow = true;
         model.receiveShadow = true;
-        skyGroup.add(_model);
-        skyGroup.add(model);
+        cloudGroup.add(_model);
+        cloudGroup.add(model);
       });
     });
   }
@@ -435,13 +437,6 @@ document.addEventListener("keyup", (event) => {
 });
 
 let lastMouseX = window.innerWidth / 2;
-let lastMouseY = window.innerHeight / 2;
-const initialRotateX = personCamera.rotation.x;
-console.log("initialRotateX", initialRotateX);
-function radiansToDegrees(radians) {
-  return radians * (180 / Math.PI);
-}
-
 // 监听鼠标移动事件
 document.addEventListener("mousemove", (event) => {
   const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
@@ -451,12 +446,25 @@ document.addEventListener("mousemove", (event) => {
 
   const x_rotationAngle =
     ((window.innerHeight / 2 - mouseY) / window.innerHeight) * 1.3 * -Math.PI;
-  const x_format_rotationAngle = Math.min(Math.max(x_rotationAngle, Math.PI / -2), Math.PI / 6);
+  const x_format_rotationAngle = Math.min(
+    Math.max(x_rotationAngle, Math.PI / -2),
+    Math.PI / 6
+  );
   personCamera.rotation.x = x_format_rotationAngle - Math.PI;
 
   lastMouseX = mouseX;
-  lastMouseY = mouseY;
 });
+
+const moveCloudGroup = () => {
+  const clouds = cloudGroup.children;
+  clouds.forEach((cloud) => {
+    cloud.position.z += 0.012;
+    if (cloud.position.z > skyHeight / 2) {
+      cloud.position.z = -skyHeight / 2;
+      cloud.rotateY(Math.PI / 2);
+    }
+  });
+};
 
 function animate() {
   requestAnimationFrame(animate);
@@ -480,6 +488,7 @@ function animate() {
     personGroup.position.z += moveSpeed * sinMoveSpeed;
     personGroup.position.x -= moveSpeed * cosMoveSpeed;
   }
+  moveCloudGroup();
   renderer.render(scene, renderCamera);
 }
 
