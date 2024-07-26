@@ -31,7 +31,6 @@ renderer.shadowMap.enabled = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
 const controls = new OrbitControls(camera, renderer.domElement);
-// const controls2 = new OrbitControls(personCamera, renderer.domElement);
 controls.update();
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
@@ -45,14 +44,24 @@ const cubes = [];
 {
   const geometry = new THREE.BoxGeometry(2, 2, 2);
   const material = new THREE.MeshPhysicalMaterial({
+    // color: 0x00ffff,
     // transparent: true,
-    opacity: 0.8,
-    // depthWrite: false,
+    // opacity: 0.5,
+    // // depthWrite: false,
     // depthTest: true,
-    transmission: 0.8,
+    // transmission: 0.8,
+    // reflectivity: 0.5,
+    transparent: true,
+    // opacity: 0.5,
+    transmission: 1, // 透光效果
+    roughness: 0.8,
+    depthWrite: false, // 关闭深度写入以获得更好的透明效果
   });
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(0, 25, 0);
+  mesh.receiveShadow = true;
+  mesh.castShadow = true;
+  mesh.position.set(0, 25, 10);
+  mesh.needsUpdate = true;
   cubes.push(mesh);
   scene.add(mesh);
 }
@@ -74,8 +83,6 @@ function makePointLight(color, intensity, position, castShadow, container) {
   container.add(helper);
 }
 
-// makePointLight(0xffffff, 10000, [0, 40, 15], true, scene);
-
 // 方向光 模拟太阳
 {
   const color = 0xffffff;
@@ -87,7 +94,7 @@ function makePointLight(color, intensity, position, castShadow, container) {
   light.shadow.camera.top = sceneHeight / -1;
   light.shadow.camera.bottom = sceneHeight / 1;
   light.shadow.camera.far = 90;
-  light.position.set(0, 60, 25);
+  light.position.set(0, 60, 15);
   light.target.position.set(0, 0, 0);
   const helper = new THREE.DirectionalLightHelper(light);
   const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
@@ -347,11 +354,14 @@ const skyHeight = 2 * sceneHeight;
             child.castShadow = true;
             child.receiveShadow = true;
             child.material = new THREE.MeshPhysicalMaterial({
+              // color: 'rgb(217,229,253)',
               // transparent: true,
               // opacity: 0.8,
               // depthWrite: false,
               // depthTest: true,
-              transmission: 0.8,
+              // metalness: 0.0, //玻璃非金属
+              // roughness: 0.0, //玻璃表面光滑d
+              transmission: 0.6,
             });
           }
         });
@@ -392,12 +402,9 @@ gui
       controls.enabled = false;
       personGroup.rotation.y = 0;
       personGroup.rotation.x = 0;
-
-      // controls2.enabled = true;
     } else if (val === "third") {
       renderCamera = camera;
       controls.enabled = true;
-      // controls2.enabled = false;
       personGroup.rotation.y = 0;
       personGroup.rotation.x = 0;
     }
