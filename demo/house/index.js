@@ -468,7 +468,7 @@ const jump = (function () {
     const jumping = () => requestAnimationFrame(() => {
       const t = (Date.now() - startTime) / 800;
       const progress = bezier(t);
-      personGroup.position.y = 1.5 * progress;
+      personGroup.position.y = 2 * progress;
       if (t > 1) {
         personGroup.position.y = 0;
         isJumping = false;
