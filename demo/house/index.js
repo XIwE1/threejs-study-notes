@@ -3,10 +3,11 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 
-const sceneWidth = 80;
-const sceneHeight = 60;
+const sceneWidth = 100;
+const sceneHeight = 80;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
+// scene.fog = new THREE.Fog('lightblue', 30, 40)
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -25,10 +26,13 @@ camera.lookAt(0, 0, 0);
 const cameraHelper = new THREE.CameraHelper(camera);
 const cameraHelper2 = new THREE.CameraHelper(personCamera);
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
+// renderer.toneMapping = THREE.ACESFilmicToneMapping;
+// renderer.toneMappingExposure = 0.8;
+// renderer.physicallyCorrectLights = true;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
@@ -183,6 +187,7 @@ groundGroup.add(personGroup);
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
     groundGroup.add(model);
@@ -237,6 +242,7 @@ groundGroup.add(personGroup);
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
     groundGroup.add(model);
@@ -287,6 +293,7 @@ groundGroup.add(personGroup);
 
     personGroup.add(personCamera);
     personCamera.position.setY(2);
+    personCamera.position.setZ(0.5);
     personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
     personCamera.updateMatrixWorld();
     personCamera.name = "personCamera";
@@ -295,24 +302,24 @@ groundGroup.add(personGroup);
 
 // 天空
 const skyGroup = new THREE.Group();
-skyGroup.position.set(0, 40, 0);
+skyGroup.position.set(0, 30, 0);
 
 const cloudGroup = new THREE.Group();
 skyGroup.add(cloudGroup);
 
-const skyWidth = 2 * sceneWidth;
-const skyHeight = 2 * sceneHeight;
+const skyWidth = sceneWidth;
+const skyHeight = sceneHeight;
 {
   //
 
-  const skyGeometry = new THREE.PlaneGeometry(skyWidth, skyHeight);
-  const skyMaterial = new THREE.MeshBasicMaterial({
-    color: "rgb(141,174,252)",
-    side: THREE.DoubleSide,
-  });
-  const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
-  skyMesh.rotateX(Math.PI * -0.5);
-  skyGroup.add(skyMesh);
+  // const skyGeometry = new THREE.PlaneGeometry(skyWidth, skyHeight);
+  // const skyMaterial = new THREE.MeshBasicMaterial({
+  //   color: "rgb(141,174,252)",
+  //   side: THREE.DoubleSide,
+  // });
+  // const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
+  // skyMesh.rotateX(Math.PI * -0.5);
+  // skyGroup.add(skyMesh);
 
   //太阳
   {
@@ -378,7 +385,7 @@ const skyHeight = 2 * sceneHeight;
         );
         _model.rotateY(Math.PI * 0.5);
         model.castShadow = true;
-        model.receiveShadow = true;
+        // model.receiveShadow = true;
         cloudGroup.add(_model);
         cloudGroup.add(model);
       });
@@ -387,6 +394,19 @@ const skyHeight = 2 * sceneHeight;
 }
 
 let renderCamera = camera;
+
+// 天空盒
+{
+  const skyBoxSphere = new THREE.BoxGeometry(100, 80, 80);
+  // const skyBoxSphere = new THREE.SphereGeometry(65, 32, 16);
+  const skyBoxMaterial = new THREE.MeshBasicMaterial({
+    color: 'rgb(141,174,252)',
+    side: THREE.BackSide,
+  })
+  const skyBoxMesh = new THREE.Mesh(skyBoxSphere, skyBoxMaterial);
+  skyBoxMesh.rotateX(Math.PI * -0.5);
+  scene.add(skyBoxMesh);
+}
 
 // 创建GUI
 const gui = new GUI();
@@ -444,18 +464,19 @@ document.addEventListener("keyup", (event) => {
 });
 
 let lastMouseX = window.innerWidth / 2;
-// 监听鼠标移动事件
+// 监听鼠标移动事件 控制人物朝向和视角
 document.addEventListener("mousemove", (event) => {
   const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
+  // 控制左右旋转
   const y_rotationAngle =
     ((lastMouseX - mouseX) / window.innerWidth) * 3 * Math.PI;
   personGroup.rotation.y += y_rotationAngle;
-
+  // 控制上下旋转
   const x_rotationAngle =
     ((window.innerHeight / 2 - mouseY) / window.innerHeight) * 1.3 * -Math.PI;
   const x_format_rotationAngle = Math.min(
     Math.max(x_rotationAngle, Math.PI / -2),
-    Math.PI / 6
+    Math.PI / 3
   );
   personCamera.rotation.x = x_format_rotationAngle - Math.PI;
 
