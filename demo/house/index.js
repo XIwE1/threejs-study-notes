@@ -98,7 +98,7 @@ function makePointLight(color, intensity, position, castShadow, container) {
   light.shadow.camera.top = sceneHeight / -1;
   light.shadow.camera.bottom = sceneHeight / 1;
   light.shadow.camera.far = 90;
-  light.position.set(0, 60, 15);
+  light.position.set(0, 55, 30);
   light.target.position.set(0, 0, 0);
   const helper = new THREE.DirectionalLightHelper(light);
   const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
@@ -136,27 +136,28 @@ groundGroup.add(personGroup);
   roundMesh.rotateX(Math.PI * -0.5);
   groundGroup.add(roundMesh);
   // 放入模型
-  gltfLoader.load("house.glb", function (glb) {
+  gltfLoader.load("house-v1.glb", function (glb) {
     console.log("glb", glb);
     const model = glb.scene;
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
-        child.renderOrder = 1;
-        child.matrixWorldNeedsUpdate = true;
-        child.material.reflectivity = 1;
-        // console.log("child", child);
-        // child.receiveShadow = true;
-        // child.material.flatShading = true;
-        // child.material.wireframe = true;
-        // child.material.roughness = 0.5;
-        child.material.metalness = 0.5;
-        // child.material.emissive = 'green';
-        // child.material.alphaHash = true;
-        // child.material.alphaTest = 0.5;
-        // child.material.side = THREE.DoubleSide;
-        // child.material.transparent = true;
-        // child.material.needsUpdate = true;
+      child.castShadow = true;
+      child.receiveShadow = true;
+      child.renderOrder = 1;
+      child.matrixWorldNeedsUpdate = true;
+      // child.material.reflectivity = 1;
+      // console.log("child", child);
+      // child.receiveShadow = true;
+      // child.material.flatShading = true;
+      // child.material.wireframe = true;
+      // child.material.roughness = 0.5;
+      // child.material.metalness = 0.5;
+      // child.material.emissive = 'green';
+      // child.material.alphaHash = true;
+      // child.material.alphaTest = 0.5;
+      // child.material.side = THREE.DoubleSide;
+      // child.material.transparent = true;
+      // child.material.needsUpdate = true;
       }
     });
     model.position.set(15, 12.5, -10);
@@ -247,13 +248,12 @@ groundGroup.add(personGroup);
     });
     groundGroup.add(model);
   });
-  gltfLoader.load("village.glb", function (glb) {
+  gltfLoader.load("village-v1.glb", function (glb) {
     const model = glb.scene;
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
-        child.material.reflectivity = 1;
-        // child.receiveShadow = true;
+      child.castShadow = true;
+      child.receiveShadow = true;
       }
     });
     model.position.set(-22, 8.01, 0);
@@ -400,9 +400,9 @@ let renderCamera = camera;
   const skyBoxSphere = new THREE.BoxGeometry(100, 80, 80);
   // const skyBoxSphere = new THREE.SphereGeometry(65, 32, 16);
   const skyBoxMaterial = new THREE.MeshBasicMaterial({
-    color: 'rgb(141,174,252)',
+    color: "rgb(141,174,252)",
     side: THREE.BackSide,
-  })
+  });
   const skyBoxMesh = new THREE.Mesh(skyBoxSphere, skyBoxMaterial);
   skyBoxMesh.rotateX(Math.PI * -0.5);
   scene.add(skyBoxMesh);
@@ -454,9 +454,36 @@ const keyStates = {
   ArrowRight: false,
 };
 
+// 定义缓动函数
+function bezier(t) {
+  return t > 1 ? 0 : 4 * t * (1 - t);
+}
+
+const jump = (function () {
+  let isJumping = false;
+  return () => {
+    if (isJumping) return;
+    isJumping = true;
+    const startTime = Date.now();
+    const jumping = () => requestAnimationFrame(() => {
+      const t = (Date.now() - startTime) / 800;
+      const progress = bezier(t);
+      personGroup.position.y = 1.5 * progress;
+      if (t > 1) {
+        personGroup.position.y = 0;
+        isJumping = false;
+        return;
+      };
+      requestAnimationFrame(jumping);
+    })
+    jumping();
+  };
+})();
+
 // 监听键盘事件
 document.addEventListener("keydown", (event) => {
   keyStates[event.key] = true;
+  if (event.key === " ") jump();
 });
 
 document.addEventListener("keyup", (event) => {

@@ -13,6 +13,8 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "@gltf-transform/cli": "^4.0.8",
+    "global": "^4.4.0",
     "three": "^0.164.1"
   }
 }
