@@ -544,7 +544,7 @@ const keyStates = {
   ArrowRight: false,
 };
 
-// 定义缓动函数
+// 定义缓动函数1
 function bezier(t) {
   return t > 1 ? 0 : 4 * t * (1 - t);
 }
