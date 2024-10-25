@@ -453,12 +453,12 @@ glowComposer.addPass(renderPass);
             child.material = new THREE.MeshPhysicalMaterial({
               // color: 'rgb(217,229,253)',
               // transparent: true,
-              // opacity: 0.8,
+              // opacity: 0.9,
               // depthWrite: false,
               // depthTest: true,
-              // metalness: 0.0, //玻璃非金属
-              // roughness: 0.0, //玻璃表面光滑d
-              transmission: 0.6,
+              metalness: 0.0, //玻璃非金属
+              roughness: 0.1, //玻璃表面光滑
+              transmission: 0.45,
             });
           }
         });
@@ -559,9 +559,9 @@ const jump = (function () {
       requestAnimationFrame(() => {
         const t = (Date.now() - startTime) / 800;
         const progress = bezier(t);
-        firstViewGroup.position.y = 2 * progress;
+        personGroup.position.y = 2 * progress;
         if (t > 1) {
-          firstViewGroup.position.y = 0;
+          personGroup.position.y = 0;
           isJumping = false;
           return;
         }
