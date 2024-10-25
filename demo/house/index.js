@@ -579,7 +579,6 @@ const jump = (function () {
   };
 })();
 
-// 监听键盘事件
 document.addEventListener("keydown", (event) => {
   keyStates[event.key] = true;
   if (event.key === " ") jump();
@@ -628,7 +627,7 @@ function animate(now) {
   const deltaTime = now - then;
   then = now;
   requestAnimationFrame(animate);
-  const y_rotationAngle = firstViewGroup.rotation.y;
+  const y_rotationAngle = personGroup.rotation.y;
   const sinMoveSpeed = Math.sin(y_rotationAngle);
   const cosMoveSpeed = Math.cos(y_rotationAngle);
   // 根据键盘状态移动物体
@@ -667,10 +666,10 @@ function animate(now) {
 
   // composer.render();
 
-  glowComposer.render();
+  // glowComposer.render();
   // composer.render(deltaTime);
 
-  // renderer.render(scene, renderCamera);
+  renderer.render(scene, renderCamera);
 }
 
 animate();
