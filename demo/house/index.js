@@ -6,7 +6,8 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 
 const glowList = [];
 const sceneWidth = 100;
@@ -62,7 +63,6 @@ const cubes = [];
     // transmission: 0.8,
     // reflectivity: 0.5,
     transparent: true,
-    // opacity: 0.5,
     transmission: 1, // 透光效果
     roughness: 0.8,
     depthWrite: false, // 关闭深度写入以获得更好的透明效果
@@ -120,7 +120,7 @@ const gltfLoader = new GLTFLoader().setPath("./models/");
 const groundGroup = new THREE.Group();
 const firstViewGroup = new THREE.Group();
 const personGroup = new THREE.Group();
-const sunGroup  = new THREE.Group();
+const sunGroup = new THREE.Group();
 
 firstViewGroup.add(personGroup);
 firstViewGroup.add(sunGroup);
@@ -298,22 +298,22 @@ groundGroup.add(firstViewGroup);
     });
     personGroup.add(model);
 
-    const sunSize = 6;
-    const sunColor = 0xffffff;
-    const sunGeoMetry = new THREE.PlaneGeometry(sunSize, sunSize);
-    const sunMaterial = new THREE.MeshBasicMaterial({
-      color: sunColor,
-      side: THREE.DoubleSide,
-      // transparent: true,
-      name: "sun-material",
-    });
-    const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
-    sunMesh.position.set(0, 39.5, 15);
-    sunMesh.rotateX(-Math.PI * 0.5);
+    {
+      const sunSize = 6;
+      const sunColor = 0xffffff;
+      const sunGeoMetry = new THREE.PlaneGeometry(sunSize, sunSize);
+      const sunMaterial = new THREE.MeshBasicMaterial({
+        color: sunColor,
+        side: THREE.BackSide,
+        name: "sun-material",
+      });
+      const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
 
-    // skyGroup.add(sunMesh);
-    glowList.push(sunMesh);
-    sunGroup.add(sunMesh);
+      glowList.push(sunMesh);
+      sunGroup.add(sunMesh);
+      sunGroup.position.set(0, 39.5, 20);
+      sunGroup.rotateX(-Math.PI * 0.5);
+    }
 
     // 瞄准的基准点
     const targetElevation = new THREE.Object3D();
@@ -347,15 +347,15 @@ const skyWidth = sceneWidth;
 const skyHeight = sceneHeight;
 const params = {
   threshold: 0, // 辉光强度
-  strength: 0.5,  // 辉光阈值
-  radius: 0,  // 辉光半径
+  strength: 0.5, // 辉光阈值
+  radius: 0, // 辉光半径
   // exposure: 0.5,
 };
 
 // 场景渲染器
-const composer = new EffectComposer(renderer);
-const renderPass = new RenderPass(scene, renderCamera);
-composer.addPass(renderPass);
+const composer = new EffectComposer(renderer); // composer 效果组合器
+let renderPass = new RenderPass(scene, renderCamera); // 创建一个渲染通道
+composer.addPass(renderPass); // 组合器中添加后期处理通道
 
 // 辉光合成器
 const glowComposer = new EffectComposer(renderer);
@@ -388,9 +388,9 @@ glowComposer.addPass(renderPass);
     bloomPass.radius = params.radius;
     // bloomPass.renderToScreen = false;
 
-
     glowComposer.addPass(bloomPass);
 
+    // 自定义 着色器通道
     let shaderPass = new ShaderPass(
       new THREE.ShaderMaterial({
         uniforms: {
@@ -407,7 +407,7 @@ glowComposer.addPass(renderPass);
             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
           }
         `,
-        fragmentShader:  `
+        fragmentShader: `
           uniform sampler2D baseTexture;
           uniform sampler2D bloomTexture;
           varying vec2 vUv;
@@ -419,11 +419,10 @@ glowComposer.addPass(renderPass);
       }),
       "baseTexture"
     );
-    shaderPass.renderToScreen = true
-		shaderPass.needsSwap = true
+    shaderPass.renderToScreen = true;
+    shaderPass.needsSwap = true;
     // composer.addPass(shaderPass);
     // composer.addPass(bloomPass);
-
   }
   // 云
   const cloudPaths = [
@@ -507,12 +506,14 @@ gui
   .onChange((val) => {
     if (val === "first") {
       renderCamera = personCamera;
+      changeComposerCamera(renderCamera);
       controls.enabled = false;
       personGroup.rotation.y = 0;
       personGroup.rotation.x = 0;
       steve_model.visible = false;
     } else if (val === "third") {
       renderCamera = camera;
+      changeComposerCamera(renderCamera);
       controls.enabled = true;
       personGroup.rotation.y = 0;
       personGroup.rotation.x = 0;
@@ -542,6 +543,13 @@ const keyStates = {
   ArrowDown: false,
   ArrowLeft: false,
   ArrowRight: false,
+};
+
+const changeComposerCamera = (camera) => {
+  if (!camera || !glowComposer) return;
+  glowComposer.removePass(renderPass);
+  renderPass = new RenderPass(scene, camera);
+  glowComposer.insertPass(renderPass, 0);
 };
 
 // 定义缓动函数1
@@ -659,10 +667,10 @@ function animate(now) {
 
   // composer.render();
 
-  // glowComposer.render();
+  glowComposer.render();
   // composer.render(deltaTime);
 
-  renderer.render(scene, renderCamera);
+  // renderer.render(scene, renderCamera);
 }
 
 animate();
