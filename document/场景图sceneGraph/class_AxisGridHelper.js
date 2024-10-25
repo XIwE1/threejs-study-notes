@@ -1,4 +1,4 @@
-import * as THREE from "../../node_modules/three/build/three.module.js";
+import * as THREE from "three";
 // 打开/关闭轴和网格的可见性
 // lil-gui 要求一个返回类型为bool型的属性
 // 来创建一个复选框，所以我们为 `visible`属性
