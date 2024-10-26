@@ -9,7 +9,13 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 
+const materials = {};
+const darkenMaterial = new THREE.MeshBasicMaterial({ color: "black" });
 const glowList = [];
+const BLOOM_SCENE = 1;
+const bloomLayer = new THREE.Layers();
+bloomLayer.set(BLOOM_SCENE);
+
 const sceneWidth = 100;
 const sceneHeight = 80;
 const scene = new THREE.Scene();
@@ -37,10 +43,8 @@ let renderCamera = camera;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
+// renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
-// renderer.toneMapping = THREE.ACESFilmicToneMapping;
-// renderer.toneMappingExposure = 0.8;
-// renderer.physicallyCorrectLights = true;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
@@ -48,6 +52,7 @@ const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 scene.add(cameraHelper);
 scene.add(cameraHelper2);
+scene.children.length = 0;
 
 document.body.appendChild(renderer.domElement);
 
@@ -55,19 +60,9 @@ const cubes = [];
 
 {
   const geometry = new THREE.BoxGeometry(2, 2, 2);
-  const material = new THREE.MeshPhysicalMaterial({
-    // color: 0x00ffff,
-    // opacity: 0.5,
-    // // depthWrite: false,
-    // depthTest: true,
-    // transmission: 0.8,
-    // reflectivity: 0.5,
-    transparent: true,
-    transmission: 1, // 透光效果
-    roughness: 0.8,
-    depthWrite: false, // 关闭深度写入以获得更好的透明效果
-  });
+  const material = new THREE.MeshPhysicalMaterial({});
   const mesh = new THREE.Mesh(geometry, material);
+  mesh.layers.toggle(BLOOM_SCENE);
   mesh.receiveShadow = true;
   mesh.castShadow = true;
   mesh.position.set(0, 25, 10);
@@ -159,20 +154,6 @@ groundGroup.add(firstViewGroup);
         child.receiveShadow = true;
         child.renderOrder = 1;
         child.matrixWorldNeedsUpdate = true;
-        // child.material.reflectivity = 1;
-        // console.log("child", child);
-        // child.receiveShadow = true;
-        // child.material.flatShading = true;
-        // child.material.wireframe = true;
-        // child.material.roughness = 0.5;
-        // child.material.metalness = 0.5;
-        // child.material.emissive = 'green';
-        // child.material.alphaHash = true;
-        // child.material.alphaTest = 0.5;
-        // child.material.side = THREE.DoubleSide;
-        // child.material.transparent = true;
-        // child.material.needsUpdate = true;
-        glowList.push(child);
       }
     });
     model.position.set(15, 12.5, -10);
@@ -305,11 +286,12 @@ groundGroup.add(firstViewGroup);
       const sunMaterial = new THREE.MeshBasicMaterial({
         color: sunColor,
         side: THREE.BackSide,
-        name: "sun-material",
       });
       const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
+      sunMesh.name = "sun-material";
+      sunMesh.layers.toggle(BLOOM_SCENE);
 
-      glowList.push(sunMesh);
+      glowList.push(sunMesh.name);
       sunGroup.add(sunMesh);
       sunGroup.position.set(0, 39.5, 20);
       sunGroup.rotateX(-Math.PI * 0.5);
@@ -353,7 +335,7 @@ const params = {
 };
 
 // 场景渲染器
-const composer = new EffectComposer(renderer); // composer 效果组合器
+const composer = new EffectComposer(renderer); // 创建效果组合器
 let renderPass = new RenderPass(scene, renderCamera); // 创建一个渲染通道
 composer.addPass(renderPass); // 组合器中添加后期处理通道
 
@@ -362,18 +344,9 @@ const glowComposer = new EffectComposer(renderer);
 // glowComposer.renderToScreen = false;
 glowComposer.addPass(renderPass);
 
+composer.setSize(window.innerWidth, window.innerHeight);
+glowComposer.setSize(window.innerWidth, window.innerHeight);
 {
-  //
-
-  // const skyGeometry = new THREE.PlaneGeometry(skyWidth, skyHeight);
-  // const skyMaterial = new THREE.MeshBasicMaterial({
-  //   color: "rgb(141,174,252)",
-  //   side: THREE.DoubleSide,
-  // });
-  // const skyMesh = new THREE.Mesh(skyGeometry, skyMaterial);
-  // skyMesh.rotateX(Math.PI * -0.5);
-  // skyGroup.add(skyMesh);
-
   //太阳
   {
     // 创建辉光效果
@@ -391,7 +364,7 @@ glowComposer.addPass(renderPass);
     glowComposer.addPass(bloomPass);
 
     // 自定义 着色器通道
-    let shaderPass = new ShaderPass(
+    const mixPass = new ShaderPass(
       new THREE.ShaderMaterial({
         uniforms: {
           baseTexture: { value: null },
@@ -419,10 +392,13 @@ glowComposer.addPass(renderPass);
       }),
       "baseTexture"
     );
-    shaderPass.renderToScreen = true;
-    shaderPass.needsSwap = true;
-    // composer.addPass(shaderPass);
-    // composer.addPass(bloomPass);
+    // mixPass.renderToScreen = true;
+    mixPass.needsSwap = true;
+
+    const outputPass = new OutputPass();
+
+    composer.addPass(mixPass);
+    composer.addPass(outputPass);
   }
   // 云
   const cloudPaths = [
@@ -546,10 +522,10 @@ const keyStates = {
 };
 
 const changeComposerCamera = (camera) => {
-  if (!camera || !glowComposer) return;
-  glowComposer.removePass(renderPass);
+  if (!camera || !composer) return;
+  composer.removePass(renderPass);
   renderPass = new RenderPass(scene, camera);
-  glowComposer.insertPass(renderPass, 0);
+  composer.insertPass(renderPass, 0);
 };
 
 // 定义缓动函数1
@@ -619,13 +595,9 @@ const moveCloudGroup = () => {
   });
 };
 
-const blackMaterial = new THREE.MeshBasicMaterial({ color: "black" });
+// scene.traverse(disposeMaterial);
 
-let then = 0;
 function animate(now) {
-  now *= 0.001;
-  const deltaTime = now - then;
-  then = now;
   requestAnimationFrame(animate);
   const y_rotationAngle = personGroup.rotation.y;
   const sinMoveSpeed = Math.sin(y_rotationAngle);
@@ -649,27 +621,35 @@ function animate(now) {
   }
   moveCloudGroup();
   controls.update();
-  // scene.traverse((object) => {
-  //   // object.isMesh && console.log('object is mesh', object);
+  scene.traverse(darkenNonBloomed);
 
-  //   // 备份场景
-  //   if (object instanceof THREE.Scene) {
-  //     this.materials.scene = object.background;
-  //     object.background = null;
-  //   }
-  //   // 备份材质
-  //   if (!glowList.includes(object.name) && object.isMesh) {
-  //     this.materials[object.uuid] = object.material;
-  //     object.material = blackMaterial;
-  //   }
-  // });
+  glowComposer.render();
 
-  // composer.render();
+  scene.traverse(restoreMaterial);
 
-  // glowComposer.render();
-  // composer.render(deltaTime);
+  composer.render();
 
-  renderer.render(scene, renderCamera);
+  // renderer.render(scene, renderCamera);
+}
+
+function darkenNonBloomed(obj) {
+  if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
+    materials[obj.uuid] = obj.material;
+    obj.material = darkenMaterial;
+  }
+}
+
+function restoreMaterial(obj) {
+  if (materials[obj.uuid]) {
+    obj.material = materials[obj.uuid];
+    delete materials[obj.uuid];
+  }
+}
+
+function disposeMaterial(obj) {
+  if (obj.material) {
+    obj.material.dispose();
+  }
 }
 
 animate();
