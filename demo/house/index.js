@@ -1,12 +1,12 @@
-import * as THREE from "../../node_modules/three/build/three.module.js";
+import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 
 const materials = {};
@@ -43,10 +43,11 @@ let renderCamera = camera;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.setPixelRatio(window.devicePixelRatio);
 // renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(renderCamera, renderer.domElement);
 controls.update();
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
@@ -56,20 +57,17 @@ scene.children.length = 0;
 
 document.body.appendChild(renderer.domElement);
 
-const cubes = [];
-
-{
-  const geometry = new THREE.BoxGeometry(2, 2, 2);
-  const material = new THREE.MeshPhysicalMaterial({});
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.layers.toggle(BLOOM_SCENE);
-  mesh.receiveShadow = true;
-  mesh.castShadow = true;
-  mesh.position.set(0, 25, 10);
-  mesh.needsUpdate = true;
-  cubes.push(mesh);
-  scene.add(mesh);
-}
+// {
+//   const geometry = new THREE.BoxGeometry(2, 2, 2);
+//   const material = new THREE.MeshPhysicalMaterial({});
+//   const mesh = new THREE.Mesh(geometry, material);
+//   mesh.receiveShadow = true;
+//   mesh.castShadow = true;
+//   mesh.position.set(0, 25, 10);
+//   mesh.needsUpdate = true;
+//   scene.add(mesh);
+//   mesh.layers.enable(BLOOM_SCENE);
+// }
 // 增加半球光
 {
   const skyColor = 0xb1e1ff; // light blue
@@ -289,12 +287,12 @@ groundGroup.add(firstViewGroup);
       });
       const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
       sunMesh.name = "sun-material";
-      sunMesh.layers.toggle(BLOOM_SCENE);
 
       glowList.push(sunMesh.name);
       sunGroup.add(sunMesh);
       sunGroup.position.set(0, 39.5, 20);
       sunGroup.rotateX(-Math.PI * 0.5);
+      sunMesh.layers.enable(BLOOM_SCENE);
     }
 
     // 瞄准的基准点
@@ -325,81 +323,63 @@ skyGroup.position.set(0, 40, 0);
 const cloudGroup = new THREE.Group();
 skyGroup.add(cloudGroup);
 
+// 后期处理
 const skyWidth = sceneWidth;
 const skyHeight = sceneHeight;
 const params = {
   threshold: 0, // 辉光强度
-  strength: 0.5, // 辉光阈值
-  radius: 0, // 辉光半径
-  // exposure: 0.5,
+  strength: 1, // 辉光阈值
+  radius: 0.5, // 辉光半径
+  exposure: 1,
 };
 
-// 场景渲染器
-const composer = new EffectComposer(renderer); // 创建效果组合器
-let renderPass = new RenderPass(scene, renderCamera); // 创建一个渲染通道
-composer.addPass(renderPass); // 组合器中添加后期处理通道
+let renderScene = new RenderPass(scene, renderCamera); // 创建一个渲染通道
+
+// 创建辉光效果
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.5,
+  0.4,
+  0.85
+);
+bloomPass.threshold = params.threshold;
+bloomPass.strength = params.strength;
+bloomPass.radius = params.radius;
+renderer.toneMappingExposure = Math.pow(params.exposure, 4.0);
 
 // 辉光合成器
 const glowComposer = new EffectComposer(renderer);
-// glowComposer.renderToScreen = false;
-glowComposer.addPass(renderPass);
+glowComposer.renderToScreen = false;
+glowComposer.addPass(renderScene);
+glowComposer.addPass(bloomPass);
 
-composer.setSize(window.innerWidth, window.innerHeight);
+// 自定义 着色器通道
+const mixPass = new ShaderPass(
+  new THREE.ShaderMaterial({
+    uniforms: {
+      baseTexture: { value: null },
+      bloomTexture: { value: glowComposer.renderTarget2.texture },
+    },
+    vertexShader: document.getElementById("vertexshader").textContent,
+    fragmentShader: document.getElementById("fragmentshader").textContent,
+    defines: {},
+  }),
+  "baseTexture"
+);
+mixPass.needsSwap = true;
+
+const outputPass = new OutputPass();
+
+// 场景渲染器
+const finalComposer = new EffectComposer(renderer); // 创建效果组合器
+finalComposer.addPass(renderScene);
+finalComposer.addPass(mixPass);
+finalComposer.addPass(outputPass);
+
+finalComposer.setSize(window.innerWidth, window.innerHeight);
 glowComposer.setSize(window.innerWidth, window.innerHeight);
+
 {
-  //太阳
-  {
-    // 创建辉光效果
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
-      1.5,
-      0.4,
-      0.85
-    );
-    bloomPass.threshold = params.threshold;
-    bloomPass.strength = params.strength;
-    bloomPass.radius = params.radius;
-    // bloomPass.renderToScreen = false;
-
-    glowComposer.addPass(bloomPass);
-
-    // 自定义 着色器通道
-    const mixPass = new ShaderPass(
-      new THREE.ShaderMaterial({
-        uniforms: {
-          baseTexture: { value: null },
-          bloomTexture: { value: glowComposer.renderTarget2.texture },
-          tDiffuse: {
-            value: null,
-          },
-        },
-        vertexShader: `
-          varying vec2 vUv;
-          void main() {
-          vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-          }
-        `,
-        fragmentShader: `
-          uniform sampler2D baseTexture;
-          uniform sampler2D bloomTexture;
-          varying vec2 vUv;
-          void main() {
-            gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
-          }
-          `,
-        defines: {},
-      }),
-      "baseTexture"
-    );
-    // mixPass.renderToScreen = true;
-    mixPass.needsSwap = true;
-
-    const outputPass = new OutputPass();
-
-    composer.addPass(mixPass);
-    composer.addPass(outputPass);
-  }
   // 云
   const cloudPaths = [
     "cloud.glb",
@@ -522,10 +502,10 @@ const keyStates = {
 };
 
 const changeComposerCamera = (camera) => {
-  if (!camera || !composer) return;
-  composer.removePass(renderPass);
-  renderPass = new RenderPass(scene, camera);
-  composer.insertPass(renderPass, 0);
+  if (!camera || !finalComposer) return;
+  finalComposer.removePass(renderScene);
+  renderScene = new RenderPass(scene, camera);
+  finalComposer.insertPass(renderScene, 0);
 };
 
 // 定义缓动函数1
@@ -595,9 +575,9 @@ const moveCloudGroup = () => {
   });
 };
 
-// scene.traverse(disposeMaterial);
+animate();
 
-function animate(now) {
+function animate() {
   requestAnimationFrame(animate);
   const y_rotationAngle = personGroup.rotation.y;
   const sinMoveSpeed = Math.sin(y_rotationAngle);
@@ -619,16 +599,15 @@ function animate(now) {
     firstViewGroup.position.z += moveSpeed * sinMoveSpeed;
     firstViewGroup.position.x -= moveSpeed * cosMoveSpeed;
   }
+
   moveCloudGroup();
   controls.update();
-  scene.traverse(darkenNonBloomed);
 
+  scene.traverse(darkenNonBloomed);
   glowComposer.render();
 
   scene.traverse(restoreMaterial);
-
-  composer.render();
-
+  finalComposer.render();
   // renderer.render(scene, renderCamera);
 }
 
@@ -645,11 +624,3 @@ function restoreMaterial(obj) {
     delete materials[obj.uuid];
   }
 }
-
-function disposeMaterial(obj) {
-  if (obj.material) {
-    obj.material.dispose();
-  }
-}
-
-animate();
