@@ -26,7 +26,7 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  200
 );
 const personCamera = new THREE.PerspectiveCamera(
   75,
@@ -34,8 +34,10 @@ const personCamera = new THREE.PerspectiveCamera(
   0.5,
   120
 );
+
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
+
 // const cameraHelper = new THREE.CameraHelper(camera);
 // const cameraHelper2 = new THREE.CameraHelper(personCamera);
 let renderCamera = camera;
@@ -49,8 +51,8 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 
 const controls = new OrbitControls(renderCamera, renderer.domElement);
 controls.update();
-const axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
+// const axesHelper = new THREE.AxesHelper(5);
+// scene.add(axesHelper);
 // scene.add(cameraHelper);
 // scene.add(cameraHelper2);
 
@@ -80,9 +82,9 @@ function makePointLight(color, intensity, position, castShadow, container) {
   const light = new THREE.PointLight(color, intensity);
   light.castShadow = castShadow;
   light.position.set(position[0], position[1], position[2]);
-  const helper = new THREE.PointLightHelper(light);
+  // const helper = new THREE.PointLightHelper(light);
   container.add(light);
-  container.add(helper);
+  // container.add(helper);
 }
 
 // 方向光 模拟太阳
@@ -98,11 +100,11 @@ function makePointLight(color, intensity, position, castShadow, container) {
   light.shadow.camera.far = 90;
   light.position.set(0, 55, 30);
   light.target.position.set(0, 0, 0);
-  const helper = new THREE.DirectionalLightHelper(light);
+  // const helper = new THREE.DirectionalLightHelper(light);
   // const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
   // scene.add(cameraHelper);
   scene.add(light);
-  scene.add(helper);
+  // scene.add(helper);
 }
 
 // https://juejin.cn/post/7265322117771624509
@@ -327,9 +329,36 @@ const skyWidth = sceneWidth;
 const skyHeight = sceneHeight;
 const params = {
   threshold: 0, // 辉光强度
-  strength: 1, // 辉光阈值
-  radius: 0.5, // 辉光半径
-  exposure: 1,
+  strength: 0.8, // 辉光阈值
+  radius: 1, // 辉光半径
+  exposure: 3,
+};
+const pixelationShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    pixelSize: { value: 10.0 }, // Adjust this value to control pixelation size
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform vec2 resolution;
+    uniform float pixelSize;
+
+    varying vec2 vUv;
+
+    void main() {
+      vec2 dxy = pixelSize / resolution;
+      vec2 coord = dxy * floor(vUv / dxy);
+      gl_FragColor = texture2D(tDiffuse, coord);
+    }
+  `,
 };
 
 let renderScene = new RenderPass(scene, renderCamera); // 创建一个渲染通道
@@ -345,12 +374,16 @@ bloomPass.threshold = params.threshold;
 bloomPass.strength = params.strength;
 bloomPass.radius = params.radius;
 renderer.toneMappingExposure = Math.pow(params.exposure, 4.0);
+// 创建马赛克效果
+const pixelationPass = new ShaderPass(pixelationShader);
+pixelationPass.needsSwap = true;
 
 // 辉光合成器
 const glowComposer = new EffectComposer(renderer);
 glowComposer.renderToScreen = false;
 glowComposer.addPass(renderScene);
 glowComposer.addPass(bloomPass);
+glowComposer.addPass(pixelationPass);
 
 // 自定义 着色器通道
 const mixPass = new ShaderPass(
@@ -501,13 +534,15 @@ const keyStates = {
 };
 
 const changeComposerCamera = (camera) => {
-  if (!camera || !finalComposer) return;
+  if (!camera || !finalComposer || !glowComposer) return;
+  glowComposer.removePass(renderScene);
   finalComposer.removePass(renderScene);
   renderScene = new RenderPass(scene, camera);
+  glowComposer.insertPass(renderScene, 0);
   finalComposer.insertPass(renderScene, 0);
 };
 
-// 定义缓动函数1
+// 定义缓动函数
 function bezier(t) {
   return t > 1 ? 0 : 4 * t * (1 - t);
 }
@@ -549,15 +584,16 @@ document.addEventListener("mousemove", (event) => {
   const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
   // 控制左右旋转
   const mouse_x_diff = lastMouseX - mouseX;
-
   const isLeftSide = !mouse_x_diff && lastMouseX === 0;
   const isRightSide = !mouse_x_diff && lastMouseX >= window.innerWidth - 5;
   const value =
-    isLeftSide * 0.008 +
-    isRightSide * -0.008 +
+    isLeftSide * 0.012 +
+    isRightSide * -0.012 +
     (lastMouseX - mouseX) / window.innerWidth;
+
   const y_rotationAngle = value * 2 * Math.PI;
   personGroup.rotation.y += y_rotationAngle;
+
   // 控制上下旋转
   const x_rotationAngle =
     ((window.innerHeight / 2 - mouseY) / window.innerHeight) * 1.3 * -Math.PI;
@@ -606,7 +642,6 @@ function animate() {
     firstViewGroup.position.x -= moveSpeed * cosMoveSpeed;
   }
 
-  moveCloudGroup();
   controls.update();
 
   scene.traverse(darkenNonBloomed);
@@ -614,6 +649,8 @@ function animate() {
 
   scene.traverse(restoreMaterial);
   finalComposer.render();
+
+  moveCloudGroup();
   // renderer.render(scene, renderCamera);
 }
 
