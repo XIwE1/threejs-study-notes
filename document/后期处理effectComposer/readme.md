@@ -9,3 +9,5 @@ https://threejs.org/examples/#webgl_postprocessing_unreal_bloom
 
 
 几乎任何后期处理，都需要 EffectComposer.js 和 RenderPass.js。
+
+https://blog.csdn.net/shebao3333/article/details/133163262 常见的6种后期处理
