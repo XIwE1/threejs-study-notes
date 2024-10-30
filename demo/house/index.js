@@ -36,8 +36,8 @@ const personCamera = new THREE.PerspectiveCamera(
 );
 camera.position.set(0, 38, 20);
 camera.lookAt(0, 0, 0);
-const cameraHelper = new THREE.CameraHelper(camera);
-const cameraHelper2 = new THREE.CameraHelper(personCamera);
+// const cameraHelper = new THREE.CameraHelper(camera);
+// const cameraHelper2 = new THREE.CameraHelper(personCamera);
 let renderCamera = camera;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -51,9 +51,8 @@ const controls = new OrbitControls(renderCamera, renderer.domElement);
 controls.update();
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
-scene.add(cameraHelper);
-scene.add(cameraHelper2);
-scene.children.length = 0;
+// scene.add(cameraHelper);
+// scene.add(cameraHelper2);
 
 document.body.appendChild(renderer.domElement);
 
@@ -100,8 +99,8 @@ function makePointLight(color, intensity, position, castShadow, container) {
   light.position.set(0, 55, 30);
   light.target.position.set(0, 0, 0);
   const helper = new THREE.DirectionalLightHelper(light);
-  const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
-  scene.add(cameraHelper);
+  // const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
+  // scene.add(cameraHelper);
   scene.add(light);
   scene.add(helper);
 }
@@ -549,8 +548,15 @@ let lastMouseX = window.innerWidth / 2;
 document.addEventListener("mousemove", (event) => {
   const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
   // 控制左右旋转
-  const y_rotationAngle =
-    ((lastMouseX - mouseX) / window.innerWidth) * 3 * Math.PI;
+  const mouse_x_diff = lastMouseX - mouseX;
+
+  const isLeftSide = !mouse_x_diff && lastMouseX === 0;
+  const isRightSide = !mouse_x_diff && lastMouseX >= window.innerWidth - 5;
+  const value =
+    isLeftSide * 0.008 +
+    isRightSide * -0.008 +
+    (lastMouseX - mouseX) / window.innerWidth;
+  const y_rotationAngle = value * 2 * Math.PI;
   personGroup.rotation.y += y_rotationAngle;
   // 控制上下旋转
   const x_rotationAngle =
