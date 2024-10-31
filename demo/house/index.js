@@ -29,10 +29,10 @@ const camera = new THREE.PerspectiveCamera(
   200
 );
 const personCamera = new THREE.PerspectiveCamera(
-  75,
+  70,
   window.innerWidth / window.innerHeight,
   0.5,
-  120
+  100
 );
 
 camera.position.set(0, 38, 20);
@@ -72,7 +72,7 @@ document.body.appendChild(renderer.domElement);
 // 增加半球光
 {
   const skyColor = 0xb1e1ff; // light blue
-  const groundColor = 0xeeeeee; // brownish orange
+  const groundColor = 0xeeeeee;
   const intensity = 5;
   const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
   scene.add(light);
@@ -107,7 +107,6 @@ function makePointLight(color, intensity, position, castShadow, container) {
   // scene.add(helper);
 }
 
-// https://juejin.cn/post/7265322117771624509
 const gltfLoader = new GLTFLoader().setPath("./models/");
 
 // 地面
@@ -163,7 +162,7 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("wolf.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(0, 0.5, 15);
+    model.position.set(0, 0.5, 5);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.05, 0.05, 0.05);
     model.receiveShadow = true;
@@ -177,7 +176,7 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("grass.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(5, 1, 10);
+    model.position.set(5, 1, -10);
     model.receiveShadow = true;
     model.castShadow = true;
     model.traverse((child) => {
@@ -190,7 +189,7 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("flower.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(10, 0, 10);
+    model.position.set(0, 0, -10);
     model.rotateY(Math.PI * 0.5);
     model.receiveShadow = true;
     model.castShadow = true;
@@ -215,8 +214,8 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("custom_house.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(22, 6.02, 10);
-    model.rotateY(Math.PI * 0.5);
+    model.position.set(-22, 6.02, -10);
+    // model.rotateY(Math.PI * 0.5);
     model.scale.set(0.5, 0.505, 0.5);
     model.receiveShadow = true;
     model.castShadow = true;
@@ -252,7 +251,8 @@ groundGroup.add(firstViewGroup);
         child.material.transparent = true;
       }
     });
-    model.position.set(-22, 8.01, 0);
+    model.position.set(0, 8.01, 22);
+    model.rotateY(Math.PI);
     model.receiveShadow = true;
     model.castShadow = true;
     model.renderOrder = 1;
@@ -336,7 +336,9 @@ const params = {
 const pixelationShader = {
   uniforms: {
     tDiffuse: { value: null },
-    resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    resolution: {
+      value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+    },
     pixelSize: { value: 10.0 }, // Adjust this value to control pixelation size
   },
   vertexShader: `
@@ -628,6 +630,14 @@ function animate() {
   if (keyStates["w"] || keyStates["ArrowUp"]) {
     firstViewGroup.position.z += moveSpeed * cosMoveSpeed;
     firstViewGroup.position.x += moveSpeed * sinMoveSpeed;
+  }
+  if (keyStates["q"]) {
+    const y_rotationAngle = 0.003 * 2 * Math.PI;
+    personGroup.rotation.y += y_rotationAngle;
+  }
+  if (keyStates["e"]) {
+    const y_rotationAngle = -0.003 * 2 * Math.PI;
+    personGroup.rotation.y += y_rotationAngle;
   }
   if (keyStates["s"] || keyStates["ArrowDown"]) {
     firstViewGroup.position.z -= moveSpeed * cosMoveSpeed;
