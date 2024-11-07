@@ -58,6 +58,22 @@ controls.update();
 
 document.body.appendChild(renderer.domElement);
 
+const loadModel = (path) =>
+  new Promise((resolve) => {
+    gltfLoader.load(path, function (glb) {
+      const model = glb.scene;
+      model.receiveShadow = true;
+      model.castShadow = true;
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      resolve(model);
+    });
+  });
+
 // {
 //   const geometry = new THREE.BoxGeometry(2, 2, 2);
 //   const material = new THREE.MeshPhysicalMaterial({});
@@ -69,10 +85,13 @@ document.body.appendChild(renderer.domElement);
 //   scene.add(mesh);
 //   mesh.layers.enable(BLOOM_SCENE);
 // }
-// 增加半球光
+
+// 增加 半球光
 {
-  const skyColor = 0xb1e1ff; // light blue
-  const groundColor = 0xeeeeee;
+  const skyColor = '#a3cee9';
+  const groundColor = 0x8e8e8e;
+  // const skyColor = 0xb1e1ff;
+  // const groundColor = 0xeeeeee;
   const intensity = 5;
   const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
   scene.add(light);
@@ -154,7 +173,7 @@ groundGroup.add(firstViewGroup);
         child.matrixWorldNeedsUpdate = true;
       }
     });
-    model.position.set(15, 12.5, -10);
+    model.position.set(25, 11.605, -10);
     model.scale.set(0.8, 0.8, 0.8);
     model.receiveShadow = true;
     model.castShadow = true;
@@ -162,7 +181,7 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("wolf.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(0, 0.5, 5);
+    model.position.set(0, 0.4, 5);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.05, 0.05, 0.05);
     model.receiveShadow = true;
@@ -174,23 +193,11 @@ groundGroup.add(firstViewGroup);
     });
     groundGroup.add(model);
   });
-  gltfLoader.load("grass.glb", function (glb) {
+  gltfLoader.load("fox.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(5, 1, -10);
-    model.receiveShadow = true;
-    model.castShadow = true;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-    groundGroup.add(model);
-  });
-  gltfLoader.load("flower.glb", function (glb) {
-    const model = glb.scene;
-    model.position.set(0, 0, -10);
+    model.position.set(5, 0.44, -5);
     model.rotateY(Math.PI * 0.5);
+    model.scale.set(0.4, 0.4, 0.4);
     model.receiveShadow = true;
     model.castShadow = true;
     model.traverse((child) => {
@@ -200,6 +207,78 @@ groundGroup.add(firstViewGroup);
     });
     groundGroup.add(model);
   });
+
+  let allModels = ["tree.glb", "grass.glb", "flower.glb"].map((path) =>
+    loadModel(path)
+  );
+  Promise.all(allModels).then((models) => {
+    // gltfLoader.load("tree.glb", function (glb) {
+    const tree_model = models[0];
+    const grass_model = models[1];
+    const flower_model = models[2];
+    tree_model.scale.set(8, 8, 8);
+    grass_model.scale.set(0.7, 0.7, 0.7);
+    // flower_model.scale.set(8, 8, 8);
+
+    const tree_models = Array.from({ length: 15 }, () => tree_model.clone());
+    const positions = [
+      [0, -30],
+      [10, -10],
+      [40, -10],
+      [38, 5],
+      [25, -30],
+      [22.5, 7.5],
+      [20, 22.5],
+      [35, 20],
+      [-35, 20],
+      [-25, -30],
+      [-25, 10],
+      [-12, -10],
+      [-22, 25],
+      [-38, 3],
+    ];
+    const get_random_number = () => ~~(Math.random() * 20 - 10);
+    tree_models.forEach((model, index) => {
+      const position = positions[index];
+      model.position.set(position[0], -3.8, position[1]);
+      groundGroup.add(model);
+
+      const grass_models = Array.from({ length: 5 }, () => grass_model.clone());
+      const flower_models = Array.from({ length: 2 }, () => flower_model.clone());
+      grass_models.forEach((grass_model) => grass_model.position.set(position[0] + get_random_number(), 0, position[1] + get_random_number()))
+      grass_models.forEach(model => groundGroup.add(model));
+      flower_models.forEach((flower_model) => flower_model.position.set(position[0] + get_random_number(), 0, position[1] + get_random_number()))
+      flower_models.forEach(model => groundGroup.add(model));
+    });
+  });
+
+  // gltfLoader.load("grass.glb", function (glb) {
+  //   const model = glb.scene;
+  //   model.position.set(5, 0, -10);
+  //   model.receiveShadow = true;
+  //   model.castShadow = true;
+  //   model.traverse((child) => {
+  //     if (child.isMesh) {
+  //       child.castShadow = true;
+  //       child.receiveShadow = true;
+  //     }
+  //   });
+  //   groundGroup.add(model);
+  // });
+
+  // gltfLoader.load("flower.glb", function (glb) {
+  //   const model = glb.scene;
+  //   model.position.set(0, 0, -10);
+  //   model.rotateY(Math.PI * 0.5);
+  //   model.receiveShadow = true;
+  //   model.castShadow = true;
+  //   model.traverse((child) => {
+  //     if (child.isMesh) {
+  //       child.castShadow = true;
+  //     }
+  //   });
+  //   groundGroup.add(model);
+  // });
   gltfLoader.load("bench.glb", function (glb) {
     const model = glb.scene;
     model.position.set(0, 0, -5);
@@ -214,7 +293,7 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("custom_house.glb", function (glb) {
     const model = glb.scene;
-    model.position.set(-22, 6.02, -10);
+    model.position.set(-30, 6.02, -10);
     // model.rotateY(Math.PI * 0.5);
     model.scale.set(0.5, 0.505, 0.5);
     model.receiveShadow = true;
@@ -387,7 +466,7 @@ glowComposer.addPass(renderScene);
 glowComposer.addPass(bloomPass);
 glowComposer.addPass(pixelationPass);
 
-// 自定义 着色器通道
+// 创建辉光效果
 const mixPass = new ShaderPass(
   new THREE.ShaderMaterial({
     uniforms: {
@@ -423,13 +502,7 @@ glowComposer.setSize(window.innerWidth, window.innerHeight);
     "cloud5.glb",
     "cloud6.glb",
   ];
-  const loadModel = (path) =>
-    new Promise((resolve) => {
-      gltfLoader.load(path, function (glb) {
-        const model = glb.scene;
-        resolve(model);
-      });
-    });
+
   {
     let allModels = cloudPaths.map((path) => loadModel(path));
     allModels = [...allModels, ...allModels, ...allModels, ...allModels];
