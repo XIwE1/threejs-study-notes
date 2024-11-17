@@ -9,6 +9,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 
+const clock = new THREE.Clock()
 const materials = {};
 const darkenMaterial = new THREE.MeshBasicMaterial({ color: "black" });
 const glowList = [];
@@ -138,6 +139,9 @@ firstViewGroup.add(personGroup);
 firstViewGroup.add(sunGroup);
 
 let steve_model;
+let steve_walk;
+let modelControls = {};
+let mixer;
 
 groundGroup.add(firstViewGroup);
 {
@@ -220,7 +224,7 @@ groundGroup.add(firstViewGroup);
     grass_model.scale.set(0.7, 0.7, 0.7);
     // flower_model.scale.set(8, 8, 8);
 
-    const tree_models = Array.from({ length: 15 }, () => tree_model.clone());
+    const tree_models = Array.from({ length: 14 }, () => tree_model.clone());
     const positions = [
       [0, -30],
       [10, -10],
@@ -352,9 +356,20 @@ groundGroup.add(firstViewGroup);
     groundGroup.add(model);
   });
   gltfLoader.load("steve.glb", function (glb) {
-    console.log("steve animations", glb.animations);
-    const walk = glb.animations[0];
     const model = glb.scene;
+    
+    mixer = new THREE.AnimationMixer(model);
+    const action = mixer.clipAction(glb.animations[0]);
+    modelControls = {
+      walk() {
+        action.paused = false;
+        action.play();
+      },
+      stop() {
+        action.paused = true;
+      },
+    };
+
     steve_model = model;
     model.scale.set(0.002, 0.002, 0.002);
     model.position.set(0, 1.18, 0);
@@ -729,6 +744,8 @@ const moveFirstViewGroup = () => {
     keyStates,
     y_rotationAngle
   );
+  if (x_distance || z_distance) modelControls.walk();
+  else return (modelControls.stop && modelControls.stop());
   firstViewGroup.position.x += x_distance;
   firstViewGroup.position.z += z_distance;
 };
@@ -755,7 +772,6 @@ function animate(lastTime = 0) {
   refreshSpeed(fps);
   moveFirstViewGroup();
   moveCloudGroup();
-
   controls.update();
 
   scene.traverse(darkenNonBloomed);
@@ -764,6 +780,9 @@ function animate(lastTime = 0) {
   scene.traverse(restoreMaterial);
   finalComposer.render();
 
+  
+  const delta = clock.getDelta()
+  mixer && mixer.update(delta);
   // renderer.render(scene, renderCamera);
 }
 
