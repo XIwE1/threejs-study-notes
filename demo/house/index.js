@@ -88,7 +88,7 @@ const loadModel = (path) =>
 
 // 增加 半球光
 {
-  const skyColor = '#a3cee9';
+  const skyColor = "#a3cee9";
   const groundColor = 0x8e8e8e;
   // const skyColor = 0xb1e1ff;
   // const groundColor = 0xeeeeee;
@@ -244,11 +244,25 @@ groundGroup.add(firstViewGroup);
       groundGroup.add(model);
 
       const grass_models = Array.from({ length: 5 }, () => grass_model.clone());
-      const flower_models = Array.from({ length: 2 }, () => flower_model.clone());
-      grass_models.forEach((grass_model) => grass_model.position.set(position[0] + get_random_number(), 0, position[1] + get_random_number()))
-      grass_models.forEach(model => groundGroup.add(model));
-      flower_models.forEach((flower_model) => flower_model.position.set(position[0] + get_random_number(), 0, position[1] + get_random_number()))
-      flower_models.forEach(model => groundGroup.add(model));
+      const flower_models = Array.from({ length: 2 }, () =>
+        flower_model.clone()
+      );
+      grass_models.forEach((grass_model) =>
+        grass_model.position.set(
+          position[0] + get_random_number(),
+          0,
+          position[1] + get_random_number()
+        )
+      );
+      grass_models.forEach((model) => groundGroup.add(model));
+      flower_models.forEach((flower_model) =>
+        flower_model.position.set(
+          position[0] + get_random_number(),
+          0,
+          position[1] + get_random_number()
+        )
+      );
+      flower_models.forEach((model) => groundGroup.add(model));
     });
   });
 
@@ -383,6 +397,7 @@ groundGroup.add(firstViewGroup);
       color: "red",
     });
     const cube = new THREE.Mesh(geometry, material);
+    cube.visible = false;
     targetElevation.add(cube);
     targetElevation.name = "targetElevation";
     personGroup.add(targetElevation);
@@ -593,21 +608,6 @@ gui
 scene.add(groundGroup);
 scene.add(skyGroup);
 
-// 定义移动速度
-const moveSpeed = 0.1;
-
-// 键盘状态
-const keyStates = {
-  w: false,
-  s: false,
-  a: false,
-  d: false,
-  ArrowUp: false,
-  ArrowDown: false,
-  ArrowLeft: false,
-  ArrowRight: false,
-};
-
 const changeComposerCamera = (camera) => {
   if (!camera || !finalComposer || !glowComposer) return;
   glowComposer.removePass(renderScene);
@@ -644,15 +644,6 @@ const jump = (function () {
   };
 })();
 
-document.addEventListener("keydown", (event) => {
-  keyStates[event.key] = true;
-  if (event.key === " ") jump();
-});
-
-document.addEventListener("keyup", (event) => {
-  keyStates[event.key] = false;
-});
-
 let lastMouseX = window.innerWidth / 2;
 // 监听鼠标移动事件 控制人物朝向和视角
 document.addEventListener("mousemove", (event) => {
@@ -681,6 +672,31 @@ document.addEventListener("mousemove", (event) => {
   lastMouseX = mouseX;
 });
 
+document.addEventListener("keydown", (event) => {
+  keyStates[event.key] = true;
+  if (event.key === " ") jump();
+});
+
+document.addEventListener("keyup", (event) => {
+  keyStates[event.key] = false;
+});
+
+// 定义移动速度
+const moveSpeed = 0.1;
+
+// 键盘状态
+const keyStates = {
+  w: false,
+  s: false,
+  a: false,
+  d: false,
+  q: false,
+  e: false,
+  ArrowUp: false,
+  ArrowDown: false,
+  ArrowLeft: false,
+  ArrowRight: false,
+};
 const moveCloudGroup = () => {
   const clouds = cloudGroup.children;
   clouds.forEach((cloud) => {
@@ -691,39 +707,41 @@ const moveCloudGroup = () => {
     }
   });
 };
+const computedMoveDistance = (speed, states, angle) => {
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
+  const forward =
+    (states["w"] || states["ArrowUp"]) - (states["s"] || states["ArrowDown"]);
+  const right =
+    (states["d"] || states["ArrowRight"]) -
+    (states["a"] || states["ArrowLeft"]);
+  const x_distance = speed * (sin * forward - cos * right);
+  const z_distance = speed * (sin * right + cos * forward);
+  return [x_distance, z_distance];
+};
+const moveFirstViewGroup = () => {
+  const y_rotationAngle = personGroup.rotation.y;
+  const [x_distance, z_distance] = computedMoveDistance(
+    moveSpeed,
+    keyStates,
+    y_rotationAngle
+  );
+  firstViewGroup.position.x += x_distance;
+  firstViewGroup.position.z += z_distance;
+};
 
 animate();
 
 function animate() {
   requestAnimationFrame(animate);
-  const y_rotationAngle = personGroup.rotation.y;
-  const sinMoveSpeed = Math.sin(y_rotationAngle);
-  const cosMoveSpeed = Math.cos(y_rotationAngle);
+  if (keyStates["q"] || keyStates["e"]) {
+    const y_rotationAngle =
+      (keyStates["q"] - keyStates["e"]) * 0.003 * 2 * Math.PI;
+    personGroup.rotation.y += y_rotationAngle;
+  }
   // 根据键盘状态移动物体
-  if (keyStates["w"] || keyStates["ArrowUp"]) {
-    firstViewGroup.position.z += moveSpeed * cosMoveSpeed;
-    firstViewGroup.position.x += moveSpeed * sinMoveSpeed;
-  }
-  if (keyStates["q"]) {
-    const y_rotationAngle = 0.003 * 2 * Math.PI;
-    personGroup.rotation.y += y_rotationAngle;
-  }
-  if (keyStates["e"]) {
-    const y_rotationAngle = -0.003 * 2 * Math.PI;
-    personGroup.rotation.y += y_rotationAngle;
-  }
-  if (keyStates["s"] || keyStates["ArrowDown"]) {
-    firstViewGroup.position.z -= moveSpeed * cosMoveSpeed;
-    firstViewGroup.position.x -= moveSpeed * sinMoveSpeed;
-  }
-  if (keyStates["a"] || keyStates["ArrowLeft"]) {
-    firstViewGroup.position.z -= moveSpeed * sinMoveSpeed;
-    firstViewGroup.position.x += moveSpeed * cosMoveSpeed;
-  }
-  if (keyStates["d"] || keyStates["ArrowRight"]) {
-    firstViewGroup.position.z += moveSpeed * sinMoveSpeed;
-    firstViewGroup.position.x -= moveSpeed * cosMoveSpeed;
-  }
+  moveFirstViewGroup();
+  moveCloudGroup();
 
   controls.update();
 
@@ -733,9 +751,16 @@ function animate() {
   scene.traverse(restoreMaterial);
   finalComposer.render();
 
-  moveCloudGroup();
   // renderer.render(scene, renderCamera);
 }
+
+window.onresize = () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  personCamera.aspect = window.innerWidth / window.innerHeight;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.updateProjectionMatrix();
+  personCamera.updateProjectionMatrix();
+};
 
 function darkenNonBloomed(obj) {
   if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
