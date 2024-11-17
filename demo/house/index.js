@@ -682,7 +682,10 @@ document.addEventListener("keyup", (event) => {
 });
 
 // 定义移动速度
-const moveSpeed = 0.1;
+const baseMoveSpeed = 0.15;
+let moveSpeed = baseMoveSpeed;
+const baseCloudSpeed = 0.012;
+let cloudSpeed = baseCloudSpeed;
 
 // 键盘状态
 const keyStates = {
@@ -700,7 +703,7 @@ const keyStates = {
 const moveCloudGroup = () => {
   const clouds = cloudGroup.children;
   clouds.forEach((cloud) => {
-    cloud.position.z += 0.012;
+    cloud.position.z += cloudSpeed;
     if (cloud.position.z > skyHeight / 2) {
       cloud.position.z = -skyHeight / 2;
       cloud.rotateY(Math.PI / 2);
@@ -729,17 +732,27 @@ const moveFirstViewGroup = () => {
   firstViewGroup.position.x += x_distance;
   firstViewGroup.position.z += z_distance;
 };
+const rotatePerson = () => {
+  const y_rotationAngle =
+    (keyStates["q"] - keyStates["e"]) * 0.003 * 2 * Math.PI;
+  personGroup.rotation.y += y_rotationAngle;
+};
+const refreshSpeed = (fps) => {
+  moveSpeed = baseMoveSpeed * (60 / fps);
+  cloudSpeed = baseCloudSpeed * (60 / fps);
+};
 
 animate();
 
-function animate() {
-  requestAnimationFrame(animate);
-  if (keyStates["q"] || keyStates["e"]) {
-    const y_rotationAngle =
-      (keyStates["q"] - keyStates["e"]) * 0.003 * 2 * Math.PI;
-    personGroup.rotation.y += y_rotationAngle;
-  }
+function animate(lastTime = 0) {
+  const curTime = Date.now();
+  const fps = ~~(1000 / (curTime - lastTime)) || 60;
+
+  requestAnimationFrame(() => animate(curTime));
+
   // 根据键盘状态移动物体
+  rotatePerson();
+  refreshSpeed(fps);
   moveFirstViewGroup();
   moveCloudGroup();
 
