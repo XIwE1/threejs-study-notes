@@ -11,7 +11,7 @@
   <style>
     @font-face {
       font-family: "unifont";
-      src: url('./font/unifont.ttf');
+      src: url("./font/unifont.ttf");
     }
     body {
       font-family: unifont, 微软雅黑;
@@ -29,7 +29,7 @@
     }
     .game-ui {
       position: absolute;
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: space-between;
       box-sizing: border-box;
@@ -149,7 +149,7 @@
     <div id="app">
       <div class="menu" id="menu">
         <div class="logo"></div>
-        <div class="start btn" onclick="startGame()">开始游戏</div>
+        <div class="start btn" id="start">开始游戏</div>
         <div
           class="about btn"
           onclick="javascript:window.open('https://juejin.cn/user/1372654389433496')"

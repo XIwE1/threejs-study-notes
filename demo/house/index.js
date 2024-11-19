@@ -9,7 +9,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 
-const clock = new THREE.Clock()
+const clock = new THREE.Clock();
 const materials = {};
 const darkenMaterial = new THREE.MeshBasicMaterial({ color: "black" });
 const glowList = [];
@@ -357,7 +357,7 @@ groundGroup.add(firstViewGroup);
   });
   gltfLoader.load("steve.glb", function (glb) {
     const model = glb.scene;
-    
+
     mixer = new THREE.AnimationMixer(model);
     const action = mixer.clipAction(glb.animations[0]);
     modelControls = {
@@ -595,29 +595,8 @@ const options = {
 };
 gui
   .add(options, "renderType", ["first", "third"])
-  .name("切换视角")
-  .onChange((val) => {
-    if (val === "first") {
-      renderCamera = personCamera;
-      changeComposerCamera(renderCamera);
-      controls.enabled = false;
-      personGroup.rotation.y = 0;
-      personGroup.rotation.x = 0;
-      steve_model.visible = false;
-    } else if (val === "third") {
-      renderCamera = camera;
-      changeComposerCamera(renderCamera);
-      controls.enabled = true;
-      personGroup.rotation.y = 0;
-      personGroup.rotation.x = 0;
-      steve_model.visible = true;
-    }
-    const cameraMap = {
-      first: personCamera,
-      third: camera,
-    };
-    renderCamera = cameraMap[val];
-  });
+  .name("游戏视角")
+  .onChange(changeRolePerspective);
 
 // 放入模型
 scene.add(groundGroup);
@@ -631,7 +610,21 @@ const changeComposerCamera = (camera) => {
   glowComposer.insertPass(renderScene, 0);
   finalComposer.insertPass(renderScene, 0);
 };
+function changeRolePerspective(type) {
+  const cameraMap = {
+    first: personCamera,
+    third: camera,
+  };
+  const targetCamera = cameraMap[type];
+  if (!targetCamera) return;
+  renderCamera = targetCamera;
+  changeComposerCamera(renderCamera);
 
+  controls.enabled = renderCamera === camera;
+  personGroup.rotation.y = 0;
+  personGroup.rotation.x = 0;
+  steve_model.visible = renderCamera === personCamera;
+};
 // 定义缓动函数
 function bezier(t) {
   return t > 1 ? 0 : 4 * t * (1 - t);
@@ -745,7 +738,7 @@ const moveFirstViewGroup = () => {
     y_rotationAngle
   );
   if (x_distance || z_distance) modelControls.walk();
-  else return (modelControls.stop && modelControls.stop());
+  else return modelControls.stop && modelControls.stop();
   firstViewGroup.position.x += x_distance;
   firstViewGroup.position.z += z_distance;
 };
@@ -774,14 +767,13 @@ function animate(lastTime = 0) {
   moveCloudGroup();
   controls.update();
 
-  scene.traverse(darkenNonBloomed);
-  glowComposer.render();
+  // scene.traverse(darkenNonBloomed);
+  // glowComposer.render();
 
-  scene.traverse(restoreMaterial);
+  // scene.traverse(restoreMaterial);
   finalComposer.render();
 
-  
-  const delta = clock.getDelta()
+  const delta = clock.getDelta();
   mixer && mixer.update(delta);
   // renderer.render(scene, renderCamera);
 }
@@ -807,3 +799,10 @@ function restoreMaterial(obj) {
     delete materials[obj.uuid];
   }
 }
+
+function startGame() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("ui").style.display = "flex";
+  changeRolePerspective('first');
+}
+document.getElementById("start").addEventListener("click", startGame);
