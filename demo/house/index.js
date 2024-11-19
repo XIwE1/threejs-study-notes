@@ -35,8 +35,8 @@ const personCamera = new THREE.PerspectiveCamera(
   100
 );
 
-camera.position.set(0, 38, 20);
-camera.lookAt(0, 0, 0);
+camera.position.set(-7.6, 9.3, 40.3);
+camera.lookAt(5, 2, 0);
 
 // const cameraHelper = new THREE.CameraHelper(camera);
 // const cameraHelper2 = new THREE.CameraHelper(personCamera);
