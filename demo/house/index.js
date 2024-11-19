@@ -12,7 +12,6 @@ import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 const clock = new THREE.Clock();
 const materials = {};
 const darkenMaterial = new THREE.MeshBasicMaterial({ color: "black" });
-const glowList = [];
 const BLOOM_SCENE = 1;
 const bloomLayer = new THREE.Layers();
 bloomLayer.set(BLOOM_SCENE);
@@ -75,18 +74,6 @@ const loadModel = (path) =>
     });
   });
 
-// {
-//   const geometry = new THREE.BoxGeometry(2, 2, 2);
-//   const material = new THREE.MeshPhysicalMaterial({});
-//   const mesh = new THREE.Mesh(geometry, material);
-//   mesh.receiveShadow = true;
-//   mesh.castShadow = true;
-//   mesh.position.set(0, 25, 10);
-//   mesh.needsUpdate = true;
-//   scene.add(mesh);
-//   mesh.layers.enable(BLOOM_SCENE);
-// }
-
 // 增加 半球光
 {
   const skyColor = "#a3cee9";
@@ -139,7 +126,6 @@ firstViewGroup.add(personGroup);
 firstViewGroup.add(sunGroup);
 
 let steve_model;
-let steve_walk;
 let modelControls = {};
 let mixer;
 
@@ -270,33 +256,6 @@ groundGroup.add(firstViewGroup);
     });
   });
 
-  // gltfLoader.load("grass.glb", function (glb) {
-  //   const model = glb.scene;
-  //   model.position.set(5, 0, -10);
-  //   model.receiveShadow = true;
-  //   model.castShadow = true;
-  //   model.traverse((child) => {
-  //     if (child.isMesh) {
-  //       child.castShadow = true;
-  //       child.receiveShadow = true;
-  //     }
-  //   });
-  //   groundGroup.add(model);
-  // });
-
-  // gltfLoader.load("flower.glb", function (glb) {
-  //   const model = glb.scene;
-  //   model.position.set(0, 0, -10);
-  //   model.rotateY(Math.PI * 0.5);
-  //   model.receiveShadow = true;
-  //   model.castShadow = true;
-  //   model.traverse((child) => {
-  //     if (child.isMesh) {
-  //       child.castShadow = true;
-  //     }
-  //   });
-  //   groundGroup.add(model);
-  // });
   gltfLoader.load("bench.glb", function (glb) {
     const model = glb.scene;
     model.position.set(0, 0, -5);
@@ -381,26 +340,30 @@ groundGroup.add(firstViewGroup);
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
-        child.side = THREE.DoubleSide;
+        child.side = THREE.FrontSide;
       }
     });
     personGroup.add(model);
 
     {
-      const sunSize = 6;
-      const sunColor = 0xffffff;
-      const sunGeoMetry = new THREE.PlaneGeometry(sunSize, sunSize);
-      const sunMaterial = new THREE.MeshBasicMaterial({
-        color: sunColor,
-        side: THREE.BackSide,
+      const sunRadius = 4;
+      const sunSegments = 28;
+      const sunTexture = new THREE.TextureLoader().load("./texture/sun.png");
+      const sunGeoMetry = new THREE.CircleGeometry(sunRadius, sunSegments);
+      // sunTexture.magFilter = THREE.NearestFilter;
+
+      const sunMaterial = new THREE.MeshPhongMaterial({
+        side: THREE.DoubleSide,
+        map: sunTexture,
+        // transparent: true,
+        // emissive: 0xffffff,
       });
       const sunMesh = new THREE.Mesh(sunGeoMetry, sunMaterial);
       sunMesh.name = "sun-material";
 
-      glowList.push(sunMesh.name);
       sunGroup.add(sunMesh);
       sunGroup.position.set(0, 39.5, 20);
-      sunGroup.rotateX(-Math.PI * 0.5);
+      sunGroup.rotateX(Math.PI * 0.5);
       sunMesh.layers.enable(BLOOM_SCENE);
     }
 
@@ -768,10 +731,10 @@ function animate(lastTime = 0) {
   moveCloudGroup();
   controls.update();
 
-  // scene.traverse(darkenNonBloomed);
-  // glowComposer.render();
+  scene.traverse(darkenNonBloomed);
+  glowComposer.render();
 
-  // scene.traverse(restoreMaterial);
+  scene.traverse(restoreMaterial);
   finalComposer.render();
 
   const delta = clock.getDelta();
@@ -804,12 +767,13 @@ function restoreMaterial(obj) {
 function startGame() {
   document.getElementById("menu").style.transform = "translate(-50%, -100%)";
   setTimeout(() => {
+    document.getElementById("menu").style.display = "none";
     document.getElementById("ui").style.display = "flex";
-  }, 500);
+  }, 800);
   document.body.style.filter = "blur(10px)";
   setTimeout(() => {
     document.body.style.filter = "blur(0px)";
-  }, 300);
+  }, 800);
   changeRolePerspective("first");
 }
 document.getElementById("start").addEventListener("click", startGame);
