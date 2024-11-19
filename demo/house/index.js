@@ -7,7 +7,6 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 
 const clock = new THREE.Clock();
 const materials = {};
@@ -56,8 +55,6 @@ controls.update();
 // scene.add(cameraHelper);
 // scene.add(cameraHelper2);
 
-document.body.appendChild(renderer.domElement);
-
 // 云
 const cloudPaths = [
   "cloud.glb",
@@ -67,6 +64,34 @@ const cloudPaths = [
   "cloud5.glb",
   "cloud6.glb",
 ];
+
+function addProgress(progress = 0) {
+  const element = document.getElementById("progress");
+  const valueElement = document.getElementById("progress-value");
+  return function (increment) {
+    progress = Math.min(100, progress + increment);
+    document.documentElement.style.setProperty("--progress-value", progress);
+    element.setAttribute("value", progress);
+    valueElement.innerText = `${progress}%`;
+    if (progress === 100) {
+      setTimeout(() => {
+        document.body.appendChild(renderer.domElement);
+        document.getElementById("menu").style.transform =
+          "translate(-50%, 30%)";
+        document.getElementById("loading").style.display = "none";
+        setTimeout(() => {
+          [...document.getElementsByClassName("btn")].forEach((btn) => {
+            btn.style.opacity = 1;
+            btn.style.transform = 'translateY(0)';
+          });
+        }, 200)
+      }, 800);
+    }
+    return progress;
+  };
+}
+const incrementProgress = addProgress(0);
+
 const loadModel = (path) =>
   new Promise((resolve) => {
     gltfLoader.load(path, function (glb) {
@@ -81,7 +106,7 @@ const loadModel = (path) =>
       });
       resolve(glb);
     });
-  });
+  }).finally(() => incrementProgress(10));
 
 const modelsLoader = {
   houseLoader: () => loadModel("house-v1.glb"),
@@ -97,9 +122,8 @@ const modelsLoader = {
       ["tree.glb", "grass.glb", "flower.glb"].map((path) => loadModel(path))
     ),
   cloudLoader: () => Promise.all(cloudPaths.map((path) => loadModel(path))),
-  // tree.glb
-  // grass.glbflower.glb
 };
+// let countModel = modelsLoader.;
 
 // 增加 半球光
 {
@@ -110,15 +134,6 @@ const modelsLoader = {
   const intensity = 5;
   const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
   scene.add(light);
-}
-
-function makePointLight(color, intensity, position, castShadow, container) {
-  const light = new THREE.PointLight(color, intensity);
-  light.castShadow = castShadow;
-  light.position.set(position[0], position[1], position[2]);
-  // const helper = new THREE.PointLightHelper(light);
-  container.add(light);
-  // container.add(helper);
 }
 
 // 方向光 模拟太阳
