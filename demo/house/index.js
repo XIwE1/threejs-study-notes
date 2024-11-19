@@ -58,6 +58,15 @@ controls.update();
 
 document.body.appendChild(renderer.domElement);
 
+// 云
+const cloudPaths = [
+  "cloud.glb",
+  "cloud2.glb",
+  "cloud3.glb",
+  "cloud4.glb",
+  "cloud5.glb",
+  "cloud6.glb",
+];
 const loadModel = (path) =>
   new Promise((resolve) => {
     gltfLoader.load(path, function (glb) {
@@ -70,9 +79,27 @@ const loadModel = (path) =>
           child.receiveShadow = true;
         }
       });
-      resolve(model);
+      resolve(glb);
     });
   });
+
+const modelsLoader = {
+  houseLoader: () => loadModel("house-v1.glb"),
+  wolfLoader: () => loadModel("wolf.glb"),
+  foxLoader: () => loadModel("fox.glb"),
+  benchLoader: () => loadModel("bench.glb"),
+  customHouseLoader: () => loadModel("custom_house.glb"),
+  blockLoader: () => loadModel("block.glb"),
+  villageLoader: () => loadModel("village-v1.glb"),
+  steveLoader: () => loadModel("steve.glb"),
+  plantLoader: () =>
+    Promise.all(
+      ["tree.glb", "grass.glb", "flower.glb"].map((path) => loadModel(path))
+    ),
+  cloudLoader: () => Promise.all(cloudPaths.map((path) => loadModel(path))),
+  // tree.glb
+  // grass.glbflower.glb
+};
 
 // 增加 半球光
 {
@@ -152,60 +179,39 @@ groundGroup.add(firstViewGroup);
   roundMesh.rotateX(Math.PI * -0.5);
   groundGroup.add(roundMesh);
   // 放入模型
-  gltfLoader.load("house-v1.glb", function (glb) {
-    console.log("glb", glb);
+  modelsLoader.houseLoader().then((glb) => {
     const model = glb.scene;
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
         child.renderOrder = 1;
         child.matrixWorldNeedsUpdate = true;
       }
     });
     model.position.set(25, 11.605, -10);
     model.scale.set(0.8, 0.8, 0.8);
-    model.receiveShadow = true;
-    model.castShadow = true;
     scene.add(model);
   });
-  gltfLoader.load("wolf.glb", function (glb) {
+
+  modelsLoader.wolfLoader().then((glb) => {
     const model = glb.scene;
     model.position.set(0, 0.4, 5);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.05, 0.05, 0.05);
-    model.receiveShadow = true;
-    model.castShadow = true;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-      }
-    });
     groundGroup.add(model);
   });
-  gltfLoader.load("fox.glb", function (glb) {
+
+  modelsLoader.foxLoader().then((glb) => {
     const model = glb.scene;
     model.position.set(5, 0.44, -5);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.4, 0.4, 0.4);
-    model.receiveShadow = true;
-    model.castShadow = true;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-      }
-    });
     groundGroup.add(model);
   });
 
-  let allModels = ["tree.glb", "grass.glb", "flower.glb"].map((path) =>
-    loadModel(path)
-  );
-  Promise.all(allModels).then((models) => {
-    // gltfLoader.load("tree.glb", function (glb) {
-    const tree_model = models[0];
-    const grass_model = models[1];
-    const flower_model = models[2];
+  modelsLoader.plantLoader().then((glbs) => {
+    const tree_model = glbs[0].scene;
+    const grass_model = glbs[1].scene;
+    const flower_model = glbs[2].scene;
     tree_model.scale.set(8, 8, 8);
     grass_model.scale.set(0.7, 0.7, 0.7);
     // flower_model.scale.set(8, 8, 8);
@@ -256,28 +262,18 @@ groundGroup.add(firstViewGroup);
     });
   });
 
-  gltfLoader.load("bench.glb", function (glb) {
+  modelsLoader.benchLoader().then((glb) => {
     const model = glb.scene;
     model.position.set(0, 0, -5);
-    model.receiveShadow = true;
-    model.castShadow = true;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-      }
-    });
     groundGroup.add(model);
   });
-  gltfLoader.load("custom_house.glb", function (glb) {
+
+  modelsLoader.customHouseLoader().then((glb) => {
     const model = glb.scene;
     model.position.set(-30, 6.02, -10);
-    // model.rotateY(Math.PI * 0.5);
     model.scale.set(0.5, 0.505, 0.5);
-    model.receiveShadow = true;
-    model.castShadow = true;
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
         child.material.side = THREE.DoubleSide;
         child.material.depthWrite = true;
         child.material.depthTest = true;
@@ -285,36 +281,27 @@ groundGroup.add(firstViewGroup);
     });
     groundGroup.add(model);
   });
-  gltfLoader.load("block.glb", function (glb) {
+
+  modelsLoader.blockLoader().then((glb) => {
     const model = glb.scene;
     model.position.set(15, 0, 1);
-    model.receiveShadow = true;
-    model.castShadow = true;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
     groundGroup.add(model);
   });
-  gltfLoader.load("village-v1.glb", function (glb) {
+
+  modelsLoader.villageLoader().then((glb) => {
     const model = glb.scene;
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
         child.material.transparent = true;
       }
     });
     model.position.set(0, 8.01, 22);
     model.rotateY(Math.PI);
-    model.receiveShadow = true;
-    model.castShadow = true;
     model.renderOrder = 1;
     groundGroup.add(model);
   });
-  gltfLoader.load("steve.glb", function (glb) {
+
+  modelsLoader.steveLoader().then((glb) => {
     const model = glb.scene;
 
     mixer = new THREE.AnimationMixer(model);
@@ -332,14 +319,11 @@ groundGroup.add(firstViewGroup);
     steve_model = model;
     model.scale.set(0.002, 0.002, 0.002);
     model.position.set(0, 1.18, 0);
-    model.receiveShadow = true;
-    model.castShadow = true;
     model.renderOrder = 1;
     model.name = "steve";
     model.matrixWorldNeedsUpdate = true;
     model.traverse((child) => {
       if (child.isMesh) {
-        child.castShadow = true;
         child.side = THREE.FrontSide;
       }
     });
@@ -486,54 +470,46 @@ finalComposer.setSize(window.innerWidth, window.innerHeight);
 glowComposer.setSize(window.innerWidth, window.innerHeight);
 
 {
-  // 云
-  const cloudPaths = [
-    "cloud.glb",
-    "cloud2.glb",
-    "cloud3.glb",
-    "cloud4.glb",
-    "cloud5.glb",
-    "cloud6.glb",
-  ];
-
   {
-    let allModels = cloudPaths.map((path) => loadModel(path));
-    allModels = [...allModels, ...allModels, ...allModels, ...allModels];
-    Promise.all(allModels).then((models) => {
-      models.forEach((model) => {
-        model.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            child.material = new THREE.MeshPhysicalMaterial({
-              // color: 'rgb(217,229,253)',
-              // transparent: true,
-              // opacity: 0.9,
-              // depthWrite: false,
-              // depthTest: true,
-              metalness: 0.0, //玻璃非金属
-              roughness: 0.1, //玻璃表面光滑
-              transmission: 0.45,
-            });
-          }
+    modelsLoader.cloudLoader().then((glbs) => {
+      Array(4)
+        .fill(glbs)
+        .flat()
+        .map((glb) => glb.scene)
+        .forEach((model) => {
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              child.material = new THREE.MeshPhysicalMaterial({
+                // color: 'rgb(217,229,253)',
+                // transparent: true,
+                // opacity: 0.9,
+                // depthWrite: false,
+                // depthTest: true,
+                metalness: 0.0, //玻璃非金属
+                roughness: 0.1, //玻璃表面光滑
+                transmission: 0.45,
+              });
+            }
+          });
+          const _model = model.clone();
+          _model.position.set(
+            Math.random() * skyWidth - skyWidth / 2,
+            -1.18,
+            Math.random() * skyHeight - skyHeight / 2
+          );
+          model.position.set(
+            Math.random() * skyWidth - skyWidth / 2,
+            -1.18,
+            Math.random() * skyHeight - skyHeight / 2
+          );
+          _model.rotateY(Math.PI * 0.5);
+          model.castShadow = true;
+          // model.receiveShadow = true;
+          cloudGroup.add(_model);
+          cloudGroup.add(model);
         });
-        const _model = model.clone();
-        _model.position.set(
-          Math.random() * skyWidth - skyWidth / 2,
-          -1.18,
-          Math.random() * skyHeight - skyHeight / 2
-        );
-        model.position.set(
-          Math.random() * skyWidth - skyWidth / 2,
-          -1.18,
-          Math.random() * skyHeight - skyHeight / 2
-        );
-        _model.rotateY(Math.PI * 0.5);
-        model.castShadow = true;
-        // model.receiveShadow = true;
-        cloudGroup.add(_model);
-        cloudGroup.add(model);
-      });
     });
   }
 }
