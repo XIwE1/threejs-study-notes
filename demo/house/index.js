@@ -624,7 +624,7 @@ function changeRolePerspective(type) {
   personGroup.rotation.y = 0;
   personGroup.rotation.x = 0;
   steve_model.visible = renderCamera === personCamera;
-};
+}
 // 定义缓动函数
 function bezier(t) {
   return t > 1 ? 0 : 4 * t * (1 - t);
@@ -655,6 +655,7 @@ const jump = (function () {
 let lastMouseX = window.innerWidth / 2;
 // 监听鼠标移动事件 控制人物朝向和视角
 document.addEventListener("mousemove", (event) => {
+  if (renderCamera !== personCamera) return;
   const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
   // 控制左右旋转
   const mouse_x_diff = lastMouseX - mouseX;
@@ -801,8 +802,14 @@ function restoreMaterial(obj) {
 }
 
 function startGame() {
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("ui").style.display = "flex";
-  changeRolePerspective('first');
+  document.getElementById("menu").style.transform = "translate(-50%, -100%)";
+  setTimeout(() => {
+    document.getElementById("ui").style.display = "flex";
+  }, 500);
+  document.body.style.filter = "blur(10px)";
+  setTimeout(() => {
+    document.body.style.filter = "blur(0px)";
+  }, 300);
+  changeRolePerspective("first");
 }
 document.getElementById("start").addEventListener("click", startGame);
