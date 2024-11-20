@@ -19,7 +19,6 @@ const sceneWidth = 100;
 const sceneHeight = 80;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
-// scene.fog = new THREE.Fog('lightblue', 30, 35)
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -31,7 +30,7 @@ const personCamera = new THREE.PerspectiveCamera(
   70,
   window.innerWidth / window.innerHeight,
   0.5,
-  100
+  130
 );
 
 camera.position.set(-7.6, 9.3, 40.3);
@@ -398,7 +397,7 @@ groundGroup.add(firstViewGroup);
     };
 
     steve_model = model;
-    model.scale.set(0.002, 0.002, 0.002);
+    model.scale.set(0.002, 0.0018, 0.002);
     model.position.set(0, 1.18, 0);
     model.renderOrder = 1;
     model.name = "steve";
@@ -446,7 +445,7 @@ groundGroup.add(firstViewGroup);
     personGroup.add(targetElevation);
 
     personGroup.add(personCamera);
-    personCamera.position.setY(2);
+    personCamera.position.setY(1.9);
     personCamera.position.setZ(0.5);
     personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
     personCamera.updateMatrixWorld();
@@ -597,12 +596,12 @@ glowComposer.setSize(window.innerWidth, window.innerHeight);
 
 // 天空盒
 {
-  const skyBoxSphere = new THREE.BoxGeometry(100, 80, 80);
+  const skyBoxGeoMetry = new THREE.BoxGeometry(100, 80, 80);
   const skyBoxMaterial = new THREE.MeshBasicMaterial({
     color: "rgb(141,174,252)",
     side: THREE.BackSide,
   });
-  const skyBoxMesh = new THREE.Mesh(skyBoxSphere, skyBoxMaterial);
+  const skyBoxMesh = new THREE.Mesh(skyBoxGeoMetry, skyBoxMaterial);
   skyBoxMesh.rotateX(Math.PI * -0.5);
   scene.add(skyBoxMesh);
 }
@@ -755,16 +754,16 @@ const maxBorderWidth = sceneWidth / 2 - 2;
 const validateBorder = () => {
   const { x, z } = firstViewGroup.position;
   const isOut =
-    (x > maxBorderWidth) |
-    (x < -maxBorderWidth) |
-    (z > maxBorderHeight) |
-    (z < -maxBorderHeight);
+    x > maxBorderWidth ||
+    x < -maxBorderWidth ||
+    z > maxBorderHeight ||
+    z < -maxBorderHeight;
   if (!isOut) return;
   firstViewGroup.position.x = 0;
   firstViewGroup.position.z = 0;
-  showOutBorder('out');
+  showOutBorder("out");
 };
-const computedFog = () => {};
+
 const moveFirstViewGroup = () => {
   const y_rotationAngle = personGroup.rotation.y;
   const [x_distance, z_distance] = computedMoveDistance(
