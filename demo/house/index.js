@@ -836,6 +836,7 @@ function restoreMaterial(obj) {
 }
 
 function startGame() {
+  document.getElementById("menu").style.pointerEvents = "none";
   document.getElementById("menu").style.transform = "translate(-50%, -100%)";
   setTimeout(() => {
     document.getElementById("menu").style.display = "none";
