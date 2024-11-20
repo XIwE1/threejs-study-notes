@@ -19,7 +19,7 @@ const sceneWidth = 100;
 const sceneHeight = 80;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
-// scene.fog = new THREE.Fog('lightblue', 30, 40)
+// scene.fog = new THREE.Fog('lightblue', 30, 35)
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -82,9 +82,9 @@ function addProgress(progress = 0) {
         setTimeout(() => {
           [...document.getElementsByClassName("btn")].forEach((btn) => {
             btn.style.opacity = 1;
-            btn.style.transform = 'translateY(0)';
+            btn.style.transform = "translateY(0)";
           });
-        }, 200)
+        }, 200);
       }, 800);
     }
     return progress;
@@ -182,7 +182,7 @@ groundGroup.add(firstViewGroup);
   roundTexture.wrapT = THREE.RepeatWrapping;
   roundTexture.magFilter = THREE.NearestFilter;
   roundTexture.colorSpace = THREE.SRGBColorSpace;
-  roundTexture.repeat.set(groundWidth / 2, groundHeight / 2);
+  roundTexture.repeat.set(groundWidth / 2 , groundHeight / 2 );
 
   const roundGeometry = new THREE.PlaneGeometry(groundWidth, groundHeight);
   const roundMaterial = new THREE.MeshPhongMaterial({
@@ -193,6 +193,7 @@ groundGroup.add(firstViewGroup);
   roundMesh.receiveShadow = true;
   roundMesh.rotateX(Math.PI * -0.5);
   groundGroup.add(roundMesh);
+
   // 放入模型
   modelsLoader.houseLoader().then((glb) => {
     const model = glb.scene;
@@ -299,8 +300,25 @@ groundGroup.add(firstViewGroup);
 
   modelsLoader.blockLoader().then((glb) => {
     const model = glb.scene;
-    model.position.set(15, 0, 1);
+    model.position.set(15, 2, 1);
     groundGroup.add(model);
+
+    // // 获取模型的边界框
+    // const box = new THREE.Box3().setFromObject(model);
+    // const modelWidth = box.getSize(new THREE.Vector3()).x;
+    // const modelHeight = box.getSize(new THREE.Vector3()).z;
+
+    // // 计算在地面上需要放置多少个模型
+    // const cols = Math.floor(groundWidth / modelWidth);
+    // const rows = Math.floor(groundHeight / modelHeight);
+
+    // for (let i = 0; i < cols; i++) {
+    //   for (let j = 0; j < rows; j++) {
+    //     const clone = model.clone();
+    //     clone.position.set(i * modelWidth, -2, j * modelHeight);
+    //     groundGroup.add(clone);
+    //   }
+    // }
   });
 
   modelsLoader.villageLoader().then((glb) => {
