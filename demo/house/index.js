@@ -65,6 +65,54 @@ const cloudPaths = [
   "cloud6.glb",
 ];
 
+function showToast(message, top = 30, duration = 3000) {
+  // 创建toast元素
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  toast.style.position = "fixed";
+  toast.style.top = top + "px";
+  toast.style.left = "50%";
+  toast.style.transform = "translateX(-50%)";
+  toast.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+  toast.style.color = "white";
+  toast.style.padding = "10px 20px";
+  toast.style.borderRadius = "3px";
+  toast.style.zIndex = "1000";
+  toast.style.opacity = "0";
+  toast.style.transition = "opacity 0.8s";
+  document.body.appendChild(toast);
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      toast.style.opacity = "1";
+    }, 10);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      resolve(true);
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 800);
+    }, duration);
+  });
+}
+
+function curryShowToast(message) {
+  const keys = new Set();
+  let count = 0;
+  return function (key) {
+    if (keys.has(key)) return;
+    key && keys.add(key);
+    const top = 50 + count * 50;
+    count++;
+    showToast(message, top, 3000).then(() => {
+      count--;
+      keys.delete(key);
+    });
+  };
+}
+
+const showOutBorder = curryShowToast("前面的区域以后再来探索吧");
+const showWelcome = curryShowToast("欢迎进入Minecraft");
+
 function addProgress(progress = 0) {
   const element = document.getElementById("progress");
   const valueElement = document.getElementById("progress-value");
@@ -714,7 +762,7 @@ const validateBorder = () => {
   if (!isOut) return;
   firstViewGroup.position.x = 0;
   firstViewGroup.position.z = 0;
-  console.log("前面的区域以后再来探索吧");
+  showOutBorder('out');
 };
 const computedFog = () => {};
 const moveFirstViewGroup = () => {
@@ -797,7 +845,8 @@ function startGame() {
   document.body.style.filter = "blur(10px)";
   setTimeout(() => {
     document.body.style.filter = "blur(0px)";
+    changeRolePerspective("first");
+    showWelcome();
   }, 800);
-  changeRolePerspective("first");
 }
 document.getElementById("start").addEventListener("click", startGame);
