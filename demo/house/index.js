@@ -182,7 +182,7 @@ groundGroup.add(firstViewGroup);
   roundTexture.wrapT = THREE.RepeatWrapping;
   roundTexture.magFilter = THREE.NearestFilter;
   roundTexture.colorSpace = THREE.SRGBColorSpace;
-  roundTexture.repeat.set(groundWidth / 2 , groundHeight / 2 );
+  roundTexture.repeat.set(groundWidth / 2, groundHeight / 2);
 
   const roundGeometry = new THREE.PlaneGeometry(groundWidth, groundHeight);
   const roundMaterial = new THREE.MeshPhongMaterial({
@@ -550,7 +550,6 @@ glowComposer.setSize(window.innerWidth, window.innerHeight);
 // 天空盒
 {
   const skyBoxSphere = new THREE.BoxGeometry(100, 80, 80);
-  // const skyBoxSphere = new THREE.SphereGeometry(65, 32, 16);
   const skyBoxMaterial = new THREE.MeshBasicMaterial({
     color: "rgb(141,174,252)",
     side: THREE.BackSide,
@@ -703,6 +702,21 @@ const computedMoveDistance = (speed, states, angle) => {
   const z_distance = speed * (sin * right + cos * forward);
   return [x_distance, z_distance];
 };
+const maxBorderHeight = sceneHeight / 2 - 2;
+const maxBorderWidth = sceneWidth / 2 - 2;
+const validateBorder = () => {
+  const { x, z } = firstViewGroup.position;
+  const isOut =
+    (x > maxBorderWidth) |
+    (x < -maxBorderWidth) |
+    (z > maxBorderHeight) |
+    (z < -maxBorderHeight);
+  if (!isOut) return;
+  firstViewGroup.position.x = 0;
+  firstViewGroup.position.z = 0;
+  console.log("前面的区域以后再来探索吧");
+};
+const computedFog = () => {};
 const moveFirstViewGroup = () => {
   const y_rotationAngle = personGroup.rotation.y;
   const [x_distance, z_distance] = computedMoveDistance(
@@ -714,6 +728,7 @@ const moveFirstViewGroup = () => {
   else return modelControls.stop && modelControls.stop();
   firstViewGroup.position.x += x_distance;
   firstViewGroup.position.z += z_distance;
+  validateBorder();
 };
 const rotatePerson = () => {
   const y_rotationAngle =
