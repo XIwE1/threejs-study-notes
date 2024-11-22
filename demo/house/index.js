@@ -7,6 +7,10 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import {
+  CSS2DRenderer,
+  CSS2DObject,
+} from "three/addons/renderers/CSS2DRenderer.js";
 
 const clock = new THREE.Clock();
 const materials = {};
@@ -14,6 +18,14 @@ const darkenMaterial = new THREE.MeshBasicMaterial({ color: "black" });
 const BLOOM_SCENE = 1;
 const bloomLayer = new THREE.Layers();
 bloomLayer.set(BLOOM_SCENE);
+
+// 创建 CSS2DRenderer
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = "absolute";
+labelRenderer.domElement.style.top = "0";
+labelRenderer.domElement.style.pointerEvents = "none";
+document.body.appendChild(labelRenderer.domElement);
 
 const sceneWidth = 100;
 const sceneHeight = 80;
@@ -219,7 +231,9 @@ firstViewGroup.add(sunGroup);
 
 let steve_model;
 let modelControls = {};
-let mixer;
+let steve_mixer;
+let fox_mixer;
+const labelModels = [];
 
 groundGroup.add(firstViewGroup);
 {
@@ -263,16 +277,27 @@ groundGroup.add(firstViewGroup);
     model.position.set(0, 0.4, 5);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.05, 0.05, 0.05);
+    model.name = "wolf";
+
+    // insertLabelByModel(model);
     groundGroup.add(model);
   });
 
   modelsLoader.foxLoader().then((glb) => {
-    console.log("fox animations ", glb.animations);
-
     const model = glb.scene;
+
+    fox_mixer = new THREE.AnimationMixer(model);
+    const action = fox_mixer.clipAction(glb.animations[0]);
+    modelControls.fox_run = () => action.play();
+    modelControls.fox_run();
+    fox_mixer.clipAction(glb.animations[0]).play();
+
+    model.name = "fox";
     model.position.set(5, 0.44, -5);
     model.rotateY(Math.PI * 0.5);
     model.scale.set(0.4, 0.4, 0.4);
+
+    insertLabelByModel(model);
     groundGroup.add(model);
   });
 
@@ -282,7 +307,6 @@ groundGroup.add(firstViewGroup);
     const flower_model = glbs[2].scene;
     tree_model.scale.set(8, 8, 8);
     grass_model.scale.set(0.7, 0.7, 0.7);
-    // flower_model.scale.set(8, 8, 8);
 
     const tree_models = Array.from({ length: 14 }, () => tree_model.clone());
     const positions = [
@@ -333,6 +357,9 @@ groundGroup.add(firstViewGroup);
   modelsLoader.benchLoader().then((glb) => {
     const model = glb.scene;
     model.position.set(0, 0, -5);
+    model.name = "椅子(不能坐)";
+
+    insertLabelByModel(model);
     groundGroup.add(model);
   });
 
@@ -389,21 +416,19 @@ groundGroup.add(firstViewGroup);
   modelsLoader.steveLoader().then((glb) => {
     const model = glb.scene;
 
-    mixer = new THREE.AnimationMixer(model);
-    const action = mixer.clipAction(glb.animations[0]);
-    modelControls = {
-      walk() {
-        action.paused = false;
-        action.play();
-      },
-      stop() {
-        action.paused = true;
-      },
+    steve_mixer = new THREE.AnimationMixer(model);
+    const action = steve_mixer.clipAction(glb.animations[0]);
+    modelControls.walk = () => {
+      action.paused = false;
+      action.play();
+    };
+    modelControls.stop = () => {
+      action.paused = true;
     };
 
     steve_model = model;
-    model.scale.set(0.002, 0.0018, 0.002);
-    model.position.set(0, 1.18, 0);
+    model.scale.set(0.0016, 0.0016, 0.0016);
+    model.position.set(0, 0.95, 0);
     model.renderOrder = 1;
     model.name = "steve";
     model.matrixWorldNeedsUpdate = true;
@@ -450,7 +475,7 @@ groundGroup.add(firstViewGroup);
     personGroup.add(targetElevation);
 
     personGroup.add(personCamera);
-    personCamera.position.setY(1.9);
+    personCamera.position.setY(1.8);
     personCamera.position.setZ(0.5);
     // personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
     personCamera.rotateY(Math.PI);
@@ -687,6 +712,27 @@ const changeComposerCamera = (camera) => {
   glowComposer.insertPass(renderScene, 0);
   finalComposer.insertPass(renderScene, 0);
 };
+function updateModelsLabel() {
+  if (renderCamera !== personCamera) return;
+  const camera_position = renderCamera.getWorldPosition(new THREE.Vector3());
+  labelModels.forEach((model) => {
+    model.label.element.style.visibility = "visible";
+    model.label.lookAt(camera_position);
+  });
+}
+function insertLabelByModel(model) {
+  const labelDiv = document.createElement("div");
+  labelDiv.className = "label-item";
+  labelDiv.textContent = model.name;
+  const label = new CSS2DObject(labelDiv);
+  label.element.style.visibility = "hidden";
+  label.position.set(0, 2, 0);
+  model.label = label;
+  model.add(label);
+
+  labelModels.push(model);
+}
+
 function changeRolePerspective(type) {
   const cameraMap = {
     first: personCamera,
@@ -764,8 +810,8 @@ document.addEventListener("keyup", (event) => {
 
 // 定义移动速度
 const baseMoveSpeed = 0.15;
-let moveSpeed = baseMoveSpeed;
 const baseCloudSpeed = 0.012;
+let moveSpeed = baseMoveSpeed;
 let cloudSpeed = baseCloudSpeed;
 
 // 键盘状态
@@ -863,7 +909,10 @@ function animate(lastTime = 0) {
   finalComposer.render();
 
   const delta = clock.getDelta();
-  mixer && mixer.update(delta);
+  steve_mixer && steve_mixer.update(delta);
+  fox_mixer && fox_mixer.update(delta);
+  updateModelsLabel();
+  labelRenderer.render(scene, renderCamera);
   // renderer.render(scene, renderCamera);
 }
 

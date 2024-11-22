@@ -24,11 +24,20 @@
       overflow: hidden;
       transition: filter 0.8s linear;
     }
-    .controls {
+    .label-item {
+      display: block;
       position: absolute;
-      display: flex;
-      flex-direction: column;
+      top: 0;
+      left: 0;
+      padding: 10px;
+      color: #fff;
+      font-size: 20px;
+      border-radius: 5px;
+      background-color: rgba(0, 0, 0, 0.6);
+      pointer-events: none;
     }
+  </style>
+  <style>
     .game-ui {
       position: absolute;
       display: none;
@@ -169,7 +178,8 @@
       color: rgb(244, 244, 244);
       letter-spacing: 2px;
       transform: translateY(20px);
-      transition: filter 0.5s ease-in-out, opacity 0.5s ease-in-out, transform 0.4s ease-in-out;
+      transition: filter 0.5s ease-in-out, opacity 0.5s ease-in-out,
+        transform 0.4s ease-in-out;
     }
     .btn:hover {
       filter: brightness(1.3);
@@ -215,7 +225,6 @@
           <div class="footer_right"></div>
         </footer>
       </div>
-      <aside class="controls"></aside>
     </div>
     <script type="x-shader/x-vertex" id="vertexshader">
 
