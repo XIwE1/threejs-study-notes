@@ -49,10 +49,11 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 
 const controls = new OrbitControls(renderCamera, renderer.domElement);
 controls.update();
-// const axesHelper = new THREE.AxesHelper(5);
+const axesHelper = new THREE.AxesHelper(5);
 // scene.add(axesHelper);
 // scene.add(cameraHelper);
 // scene.add(cameraHelper2);
+// cameraHelper2.add(axesHelper);
 
 // 云
 const cloudPaths = [
@@ -104,13 +105,15 @@ function curryShowToast(message) {
     count++;
     showToast(message, top, 3000).then(() => {
       count--;
-      keys.delete(key);
+      key && keys.delete(key);
     });
   };
 }
 
 const showOutBorder = curryShowToast("前面的区域以后再来探索吧");
 const showWelcome = curryShowToast("欢迎进入Minecraft");
+const showLockPointer = curryShowToast("已锁定鼠标 ESC退出锁定");
+const showUnLockPointer = curryShowToast("已退出锁定");
 
 function addProgress(progress = 0) {
   const element = document.getElementById("progress");
@@ -433,7 +436,7 @@ groundGroup.add(firstViewGroup);
 
     // 瞄准的基准点
     const targetElevation = new THREE.Object3D();
-    targetElevation.position.set(0, 2, 5);
+    targetElevation.position.set(0, 1.9, 5);
     const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
     const material = new THREE.MeshBasicMaterial({
       color: "red",
@@ -447,7 +450,9 @@ groundGroup.add(firstViewGroup);
     personGroup.add(personCamera);
     personCamera.position.setY(1.9);
     personCamera.position.setZ(0.5);
-    personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
+    // personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
+    personCamera.rotateY(Math.PI);
+    personCamera.rotation.x = Math.PI;
     personCamera.updateMatrixWorld();
     personCamera.name = "personCamera";
   });
@@ -670,34 +675,27 @@ const jump = (function () {
   };
 })();
 
-let lastMouseX = window.innerWidth / 2;
 // 监听鼠标移动事件 控制人物朝向和视角
-document.addEventListener("mousemove", (event) => {
+const max_x_rotation = Math.PI / 2;
+const min_x_rotation = Math.PI * 1.3;
+function onMouseMove(event) {
   if (renderCamera !== personCamera) return;
-  const { clientX: mouseX, clientY: mouseY } = event; // 当前鼠标位置
-  // 控制左右旋转
-  const mouse_x_diff = lastMouseX - mouseX;
-  const isLeftSide = !mouse_x_diff && lastMouseX === 0;
-  const isRightSide = !mouse_x_diff && lastMouseX >= window.innerWidth - 5;
-  const value =
-    isLeftSide * 0.012 +
-    isRightSide * -0.012 +
-    (lastMouseX - mouseX) / window.innerWidth;
 
-  const y_rotationAngle = value * 2 * Math.PI;
+  let x_rotationAngle;
+  let y_rotationAngle;
+
+  const move_x = Math.abs(event.movementX) > 1 ? event.movementX : 0;
+  const move_y = Math.abs(event.movementY) > 1 ? event.movementY : 0;
+
+  x_rotationAngle = move_y * 0.0012 * Math.PI;
+  y_rotationAngle = -move_x * 0.0006 * Math.PI;
+
   personGroup.rotation.y += y_rotationAngle;
-
-  // 控制上下旋转
-  const x_rotationAngle =
-    ((window.innerHeight / 2 - mouseY) / window.innerHeight) * 1.3 * -Math.PI;
-  const x_format_rotationAngle = Math.min(
-    Math.max(x_rotationAngle, Math.PI / -2),
-    Math.PI / 3
+  personCamera.rotation.x = Math.min(
+    Math.max(personCamera.rotation.x + x_rotationAngle, max_x_rotation),
+    min_x_rotation
   );
-  personCamera.rotation.x = x_format_rotationAngle - Math.PI;
-
-  lastMouseX = mouseX;
-});
+}
 
 document.addEventListener("keydown", (event) => {
   keyStates[event.key] = true;
@@ -835,18 +833,56 @@ function restoreMaterial(obj) {
   }
 }
 
+function lockPointer() {
+  if (
+    !("pointerLockElement" in document) &&
+    !("mozPointerLockElement" in document) &&
+    !("webkitPointerLockElement" in document)
+  ) {
+    console.log("Pointer lock unavailable in this browser.");
+    return;
+  }
+  if ("mozPointerLockElement" in document) {
+    console.log(
+      "Firefox needs full screen to lock mouse. Use Chrome for the time being."
+    );
+    return;
+  }
+  const element = document.body;
+  element.requestPointerLock =
+    element.requestPointerLock ||
+    element.mozRequestPointerLock ||
+    element.webkitRequestPointerLock;
+
+  element.requestPointerLock();
+}
+
+function pointerLockChange() {
+  if (document.pointerLockElement) {
+    console.log("pointerLockElement", document.pointerLockElement);
+
+    showLockPointer();
+  } else {
+    showUnLockPointer();
+  }
+}
+
+document.addEventListener("pointerlockchange", pointerLockChange, false);
+document.addEventListener("webkitpointerlockchange", pointerLockChange, false);
+document.addEventListener("mozpointerlockchange", pointerLockChange, false);
+
 function startGame() {
   document.getElementById("menu").style.pointerEvents = "none";
   document.getElementById("menu").style.transform = "translate(-50%, -100%)";
+  document.body.style.filter = "blur(10px)";
+  lockPointer(renderer);
   setTimeout(() => {
     document.getElementById("menu").style.display = "none";
     document.getElementById("ui").style.display = "flex";
-  }, 800);
-  document.body.style.filter = "blur(10px)";
-  setTimeout(() => {
     document.body.style.filter = "blur(0px)";
     changeRolePerspective("first");
     showWelcome();
+    document.addEventListener("mousemove", onMouseMove);
   }, 800);
 }
 document.getElementById("start").addEventListener("click", startGame);
