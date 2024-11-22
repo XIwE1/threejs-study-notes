@@ -778,10 +778,10 @@ const keyStates = {
   d: false,
   q: false,
   e: false,
-  ArrowUp: false,
-  ArrowDown: false,
-  ArrowLeft: false,
-  ArrowRight: false,
+  arrowup: false,
+  arrowdown: false,
+  arrowleft: false,
+  arrowright: false,
 };
 const moveCloudGroup = () => {
   const clouds = cloudGroup.children;
@@ -797,10 +797,10 @@ const computedMoveDistance = (speed, states, angle) => {
   const sin = Math.sin(angle);
   const cos = Math.cos(angle);
   const forward =
-    (states["w"] || states["ArrowUp"]) - (states["s"] || states["ArrowDown"]);
+    (states["w"] || states["arrowup"]) - (states["s"] || states["arrowdown"]);
   const right =
-    (states["d"] || states["ArrowRight"]) -
-    (states["a"] || states["ArrowLeft"]);
+    (states["d"] || states["arrowright"]) -
+    (states["a"] || states["arrowleft"]);
   const x_distance = speed * (sin * forward - cos * right);
   const z_distance = speed * (sin * right + cos * forward);
   return [x_distance, z_distance];
