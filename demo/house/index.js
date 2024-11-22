@@ -49,7 +49,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 
 const controls = new OrbitControls(renderCamera, renderer.domElement);
 controls.update();
-const axesHelper = new THREE.AxesHelper(5);
+// const axesHelper = new THREE.AxesHelper(5);
 // scene.add(axesHelper);
 // scene.add(cameraHelper);
 // scene.add(cameraHelper2);
@@ -95,25 +95,27 @@ function showToast(message, top = 30, duration = 3000) {
   });
 }
 
-function curryShowToast(message) {
+function curryShowToast(key) {
   const keys = new Set();
   let count = 0;
-  return function (key) {
+  return function (message) {
     if (keys.has(key)) return;
     key && keys.add(key);
     const top = 50 + count * 50;
-    count++;
+    ++count;
     showToast(message, top, 3000).then(() => {
-      count--;
+      --count;
       key && keys.delete(key);
     });
   };
 }
 
-const showOutBorder = curryShowToast("前面的区域以后再来探索吧");
-const showWelcome = curryShowToast("欢迎进入Minecraft");
-const showLockPointer = curryShowToast("已锁定鼠标 ESC退出锁定");
-const showUnLockPointer = curryShowToast("已退出锁定");
+const showNormalMsg = curryShowToast();
+const showSingleMsg = curryShowToast('out');
+const showOutBorder = () => showSingleMsg("前面的区域以后再来探索吧");
+const showWelcome = () => showNormalMsg("欢迎进入Minecraft");
+const showLockPointer = () => showNormalMsg("已锁定鼠标 ESC退出锁定");
+const showUnLockPointer = () => showNormalMsg("已退出锁定");
 
 function addProgress(progress = 0) {
   const element = document.getElementById("progress");
@@ -267,6 +269,8 @@ groundGroup.add(firstViewGroup);
   });
 
   modelsLoader.foxLoader().then((glb) => {
+    console.log('fox animations ', glb.animations);
+
     const model = glb.scene;
     model.position.set(5, 0.44, -5);
     model.rotateY(Math.PI * 0.5);
@@ -759,7 +763,7 @@ const validateBorder = () => {
   if (!isOut) return;
   firstViewGroup.position.x = 0;
   firstViewGroup.position.z = 0;
-  showOutBorder("out");
+  showOutBorder();
 };
 
 const moveFirstViewGroup = () => {
@@ -860,7 +864,6 @@ function lockPointer() {
 function pointerLockChange() {
   if (document.pointerLockElement) {
     console.log("pointerLockElement", document.pointerLockElement);
-
     showLockPointer();
   } else {
     showUnLockPointer();
