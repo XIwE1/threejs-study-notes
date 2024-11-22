@@ -111,7 +111,7 @@ function curryShowToast(key) {
 }
 
 const showNormalMsg = curryShowToast();
-const showSingleMsg = curryShowToast('out');
+const showSingleMsg = curryShowToast("out");
 const showOutBorder = () => showSingleMsg("前面的区域以后再来探索吧");
 const showWelcome = () => showNormalMsg("欢迎进入Minecraft");
 const showLockPointer = () => showNormalMsg("已锁定鼠标 ESC退出锁定");
@@ -269,7 +269,7 @@ groundGroup.add(firstViewGroup);
   });
 
   modelsLoader.foxLoader().then((glb) => {
-    console.log('fox animations ', glb.animations);
+    console.log("fox animations ", glb.animations);
 
     const model = glb.scene;
     model.position.set(5, 0.44, -5);
@@ -605,12 +605,64 @@ glowComposer.setSize(window.innerWidth, window.innerHeight);
 
 // 天空盒
 {
-  const skyBoxGeoMetry = new THREE.BoxGeometry(100, 80, 80);
+  const skyBoxGeoMetry = new THREE.BoxGeometry(
+    sceneWidth,
+    sceneHeight,
+    sceneHeight
+  );
+  // 创建渐变 将Canvas作为纹理
+  let texture;
+  let _texture;
+  {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 512;
+    canvas.height = 512;
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0.494, "white");
+    gradient.addColorStop(0.5, "lightgreen");
+    gradient.addColorStop(0.506, "white");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    texture = new THREE.Texture(canvas);
+    // texture.magFilter = THREE.NearestFilter;
+    // texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    _texture = texture.clone();
+    _texture.center = new THREE.Vector2(0.5, 0.5);
+    _texture.rotation = -Math.PI / 2;
+    _texture.needsUpdate = true;
+  }
+
+  const skyBoxBorderMaterial = new THREE.MeshBasicMaterial({
+    color: "rgb(141,174,252)",
+    side: THREE.BackSide,
+    map: texture,
+  });
+  const _skyBoxBorderMaterial = new THREE.MeshBasicMaterial({
+    color: "rgb(141,174,252)",
+    side: THREE.BackSide,
+    map: _texture,
+  });
   const skyBoxMaterial = new THREE.MeshBasicMaterial({
     color: "rgb(141,174,252)",
     side: THREE.BackSide,
   });
-  const skyBoxMesh = new THREE.Mesh(skyBoxGeoMetry, skyBoxMaterial);
+
+  const skyBoxMesh = new THREE.Mesh(skyBoxGeoMetry, [
+    _skyBoxBorderMaterial,
+    _skyBoxBorderMaterial,
+    skyBoxBorderMaterial,
+    skyBoxBorderMaterial,
+    skyBoxMaterial,
+    skyBoxMaterial,
+  ]);
   skyBoxMesh.rotateX(Math.PI * -0.5);
   scene.add(skyBoxMesh);
 }
@@ -702,12 +754,14 @@ function onMouseMove(event) {
 }
 
 document.addEventListener("keydown", (event) => {
-  keyStates[event.key] = true;
-  if (event.key === " ") jump();
+  const key = event.key.toLowerCase();
+  keyStates[key] = true;
+  if (key === " ") jump();
 });
 
 document.addEventListener("keyup", (event) => {
-  keyStates[event.key] = false;
+  const key = event.key.toLowerCase();
+  keyStates[key] = false;
 });
 
 // 定义移动速度
