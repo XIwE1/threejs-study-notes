@@ -138,16 +138,15 @@ function addProgress(progress = 0) {
     element.setAttribute("value", progress);
     valueElement.innerText = `${progress}%`;
     if (progress === 100) {
+      document.getElementById("menu").style.transform = "translate(-50%, 30%)";
       setTimeout(() => {
         document.body.appendChild(renderer.domElement);
-        document.getElementById("menu").style.transform =
-          "translate(-50%, 30%)";
         document.getElementById("loading").style.display = "none";
         [...document.getElementsByClassName("btn")].forEach((btn) => {
           btn.style.opacity = 1;
           btn.style.transform = "translateY(0)";
         });
-      }, 800);
+      }, 550);
     }
     return progress;
   };
