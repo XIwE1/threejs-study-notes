@@ -131,12 +131,10 @@ function addProgress(progress = 0) {
         document.getElementById("menu").style.transform =
           "translate(-50%, 30%)";
         document.getElementById("loading").style.display = "none";
-        setTimeout(() => {
-          [...document.getElementsByClassName("btn")].forEach((btn) => {
-            btn.style.opacity = 1;
-            btn.style.transform = "translateY(0)";
-          });
-        }, 200);
+        [...document.getElementsByClassName("btn")].forEach((btn) => {
+          btn.style.opacity = 1;
+          btn.style.transform = "translateY(0)";
+        });
       }, 800);
     }
     return progress;
