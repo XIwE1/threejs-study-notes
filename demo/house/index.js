@@ -231,7 +231,20 @@ firstViewGroup.add(sunGroup);
 let steve_model;
 let modelControls = {};
 let steve_mixer;
+let fox_model;
 let fox_mixer;
+const curve = new THREE.SplineCurve([
+  new THREE.Vector2(-10, 0),
+  new THREE.Vector2(-5, 5),
+  new THREE.Vector2(0, 0),
+  new THREE.Vector2(5, -5),
+  new THREE.Vector2(10, 0),
+  new THREE.Vector2(5, 5),
+  new THREE.Vector2(-5, 5),
+  new THREE.Vector2(-10, -10),
+  new THREE.Vector2(-15, -8),
+  new THREE.Vector2(-10, 0),
+]);
 const labelModels = [];
 
 groundGroup.add(firstViewGroup);
@@ -247,7 +260,10 @@ groundGroup.add(firstViewGroup);
   roundTexture.colorSpace = THREE.SRGBColorSpace;
   roundTexture.repeat.set(groundWidth / 2, groundHeight / 2);
 
-  const roundGeometry = new THREE.PlaneGeometry(groundWidth, groundHeight);
+  const roundGeometry = new THREE.PlaneGeometry(
+    groundWidth * 1.5,
+    groundHeight * 1.5
+  );
   const roundMaterial = new THREE.MeshPhongMaterial({
     side: THREE.DoubleSide,
     map: roundTexture,
@@ -284,6 +300,7 @@ groundGroup.add(firstViewGroup);
 
   modelsLoader.foxLoader().then((glb) => {
     const model = glb.scene;
+    fox_model = model;
 
     fox_mixer = new THREE.AnimationMixer(model);
     const action = fox_mixer.clipAction(glb.animations[0]);
@@ -292,9 +309,17 @@ groundGroup.add(firstViewGroup);
     fox_mixer.clipAction(glb.animations[0]).play();
 
     model.name = "fox";
-    model.position.set(5, 0.44, -5);
-    model.rotateY(Math.PI * 0.5);
+    model.position.set(0, 0.44, 0);
+    model.rotateY(Math.PI * 1);
     model.scale.set(0.4, 0.4, 0.4);
+
+    // const points = curve.getPoints(50);
+    // const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    // const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    // const splineObject = new THREE.Line(geometry, material);
+    // splineObject.rotation.x = Math.PI * 0.5;
+    // splineObject.position.y = 0.05;
+    // scene.add(splineObject);
 
     insertLabelByModel(model);
     groundGroup.add(model);
@@ -863,6 +888,30 @@ const validateBorder = () => {
   showOutBorder();
 };
 
+const targetGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+const targetMaterial = new THREE.MeshBasicMaterial({ color: "white" });
+const targetMesh = new THREE.Mesh(targetGeometry, targetMaterial);
+targetMesh.position.set(0, 0, 0);
+groundGroup.add(targetMesh);
+
+
+function moveFoxModelByCurve(curve) {
+  const foxCurve = curve;
+  return function (time) {
+    if (!fox_model) return;
+
+    const progress = (time * 0.00003) % 1;
+    const _progress = (progress + 0.01) % 1;
+    const [positionX, positionZ] = foxCurve.getPointAt(progress);
+    const [targetX, targetZ] = foxCurve.getPointAt(_progress);
+
+    fox_model.position.set(positionX, fox_model.position.y, positionZ);
+    // targetMesh.position.set(targetX, fox_model.position.y, targetZ);
+    fox_model.lookAt(targetX, fox_model.position.y, targetZ);
+    fox_model.rotateY(Math.PI / 2);
+  };
+}
+const moveFoxModel = moveFoxModelByCurve(curve);
 const moveFirstViewGroup = () => {
   const y_rotationAngle = personGroup.rotation.y;
   const [x_distance, z_distance] = computedMoveDistance(
@@ -898,6 +947,7 @@ function animate(lastTime = 0) {
   rotatePerson();
   refreshSpeed(fps);
   moveFirstViewGroup();
+  moveFoxModel(lastTime);
   moveCloudGroup();
   controls.update();
 
