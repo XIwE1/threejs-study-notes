@@ -715,14 +715,14 @@ glowComposer.setSize(window.innerWidth, window.innerHeight);
 }
 
 // 创建GUI
-const gui = new GUI();
-const options = {
-  renderType: "third",
-};
-gui
-  .add(options, "renderType", ["first", "third"])
-  .name("游戏视角")
-  .onChange(changeRolePerspective);
+// const gui = new GUI();
+// const options = {
+//   renderType: "third",
+// };
+// gui
+//   .add(options, "renderType", ["first", "third"])
+//   .name("游戏视角")
+//   .onChange(changeRolePerspective);
 
 // 放入模型
 scene.add(groundGroup);
@@ -888,11 +888,11 @@ const validateBorder = () => {
   showOutBorder();
 };
 
-const targetGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-const targetMaterial = new THREE.MeshBasicMaterial({ color: "white" });
-const targetMesh = new THREE.Mesh(targetGeometry, targetMaterial);
-targetMesh.position.set(0, 0, 0);
-groundGroup.add(targetMesh);
+// const targetGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+// const targetMaterial = new THREE.MeshBasicMaterial({ color: "white" });
+// const targetMesh = new THREE.Mesh(targetGeometry, targetMaterial);
+// targetMesh.position.set(0, 0, 0);
+// groundGroup.add(targetMesh);
 
 
 function moveFoxModelByCurve(curve) {
@@ -912,6 +912,7 @@ function moveFoxModelByCurve(curve) {
   };
 }
 const moveFoxModel = moveFoxModelByCurve(curve);
+
 const moveFirstViewGroup = () => {
   const y_rotationAngle = personGroup.rotation.y;
   const [x_distance, z_distance] = computedMoveDistance(
