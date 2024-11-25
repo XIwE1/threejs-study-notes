@@ -1,0 +1,160 @@
+:root {
+  --progress-value: 0;
+}
+.menu {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  height: 50vh;
+  width: 50vw;
+  min-width: 350px;
+  max-width: 640px;
+  user-select: none;
+  text-align: center;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  transition: transform 0.6s ease-in-out;
+}
+.logo {
+  margin-bottom: 30px;
+  padding: 5px 0;
+  background-image: url(./images/logo.png);
+  min-height: 10vh;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.progress {
+  position: relative;
+  border: 3px solid white;
+  height: 20px;
+  width: 100%;
+}
+.progress::before {
+  content: "";
+  position: absolute;
+  margin: 2px;
+  left: 0;
+  width: calc(var(--progress-value) * 1%);
+  max-width: calc(100% - 4px);
+  height: 16px;
+  text-align: left;
+  background-color: white;
+}
+.progress-number {
+  margin: 5px 0;
+  color: white;
+  font-size: 25px;
+  font-weight: 600;
+  height: 25px;
+}
+.btn {
+  opacity: 0;
+  padding: 20px;
+  margin: 15px 0;
+  background-image: url(./images/btn.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  font-size: 25px;
+  color: rgb(244, 244, 244);
+  letter-spacing: 2px;
+  transform: translateY(20px);
+  transition: filter 0.5s ease-in-out, opacity 0.5s ease-in-out,
+    transform 0.4s ease-in-out;
+}
+.btn:hover {
+  filter: brightness(1.3);
+  cursor: pointer;
+  transition: filter 0.5s ease-in-out, transform 0.4s ease-in-out;
+}
+
+.game-ui {
+  position: absolute;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  height: 100vh;
+  width: 100vw;
+  pointer-events: none;
+}
+.chat {
+  background: #000000af;
+  position: absolute;
+  margin-top: 15vh;
+}
+.chat-item {
+  margin: 10px;
+  color: white;
+  width: 300px;
+  letter-spacing: 1px;
+}
+.point {
+  position: absolute;
+  font-size: 30px;
+  color: #ffffffa4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: exclusion;
+}
+.game-header {
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.game-footer {
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.footer_center {
+  width: 40%;
+  max-width: 400px;
+}
+.status {
+  display: flex;
+  justify-content: space-between;
+  min-height: 20px;
+}
+.hp {
+  background-image: url(./images/hp.png);
+  width: 40%;
+  background-size: contain;
+  background-repeat: round;
+}
+.food {
+  background-image: url(./images/food.png);
+  width: 40%;
+  background-size: contain;
+  background-repeat: round;
+}
+.goods {
+  display: flex;
+  border: 4px solid #000000a4;
+  min-height: 40px;
+  background-image: url(/demo/house/images/menu_item.png);
+  background-size: contain;
+  background-repeat: round;
+}
+.level {
+  margin: 10px 0;
+  min-height: 15px;
+  background-image: url(./images/level.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.label-item {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px;
+  color: #fff;
+  font-size: 20px;
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
