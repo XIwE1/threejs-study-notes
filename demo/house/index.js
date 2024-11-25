@@ -294,7 +294,7 @@ groundGroup.add(firstViewGroup);
     model.scale.set(0.05, 0.05, 0.05);
     model.name = "wolf";
 
-    // insertLabelByModel(model);
+    // createLabelByModel(model);
     groundGroup.add(model);
   });
 
@@ -321,7 +321,9 @@ groundGroup.add(firstViewGroup);
     // splineObject.position.y = 0.05;
     // scene.add(splineObject);
 
-    insertLabelByModel(model);
+    createLabelByModel(model);
+    labelModels.push(model);
+
     groundGroup.add(model);
   });
 
@@ -383,7 +385,10 @@ groundGroup.add(firstViewGroup);
     model.position.set(0, 0, -5);
     model.name = "椅子(不能坐)";
 
-    insertLabelByModel(model);
+    const label = createLabelByModel(model);
+    label.center.set(0, 0);
+    labelModels.push(model);
+
     groundGroup.add(model);
   });
 
@@ -744,7 +749,7 @@ function updateModelsLabel() {
     model.label.lookAt(camera_position);
   });
 }
-function insertLabelByModel(model) {
+function createLabelByModel(model) {
   const labelDiv = document.createElement("div");
   labelDiv.className = "label-item";
   labelDiv.textContent = model.name;
@@ -753,8 +758,7 @@ function insertLabelByModel(model) {
   label.position.set(0, 2, 0);
   model.label = label;
   model.add(label);
-
-  labelModels.push(model);
+  return label;
 }
 
 function changeRolePerspective(type) {
@@ -951,7 +955,7 @@ function animate(lastTime = 0) {
   moveFoxModel(lastTime);
   moveCloudGroup();
   controls.update();
-
+  
   scene.traverse(darkenNonBloomed);
   glowComposer.render();
 
