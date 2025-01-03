@@ -19,9 +19,14 @@ const BLOOM_SCENE = 1;
 const bloomLayer = new THREE.Layers();
 bloomLayer.set(BLOOM_SCENE);
 
+let _innerWidth = window.innerWidth;
+let _innerHeight = window.innerHeight;
+let _aspect = _innerWidth / _innerHeight;
+let renderCamera;
+
 // 创建 CSS2DRenderer
 const labelRenderer = new CSS2DRenderer();
-labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.setSize(_innerWidth, _innerHeight);
 labelRenderer.domElement.style.position = "absolute";
 labelRenderer.domElement.style.top = "0";
 labelRenderer.domElement.style.pointerEvents = "none";
@@ -32,28 +37,18 @@ const sceneHeight = 80;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  200
-);
-const personCamera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.5,
-  130
-);
+const camera = new THREE.PerspectiveCamera(75, _aspect, 0.1, 200);
+const personCamera = new THREE.PerspectiveCamera(70, _aspect, 0.5, 130);
 
 camera.position.set(-7.6, 9.3, 40.3);
 camera.lookAt(5, 2, 0);
 
 // const cameraHelper = new THREE.CameraHelper(camera);
 // const cameraHelper2 = new THREE.CameraHelper(personCamera);
-let renderCamera = camera;
+renderCamera = camera;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(_innerWidth, _innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.setPixelRatio(window.devicePixelRatio);
 // renderer.toneMapping = THREE.ReinhardToneMapping;
@@ -534,7 +529,7 @@ const pixelationShader = {
   uniforms: {
     tDiffuse: { value: null },
     resolution: {
-      value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      value: new THREE.Vector2(_innerWidth, _innerHeight),
     },
     pixelSize: { value: 10.0 }, // Adjust this value to control pixelation size
   },
@@ -564,7 +559,7 @@ let renderScene = new RenderPass(scene, renderCamera); // 创建一个渲染通�
 
 // 创建辉光效果
 const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  new THREE.Vector2(_innerWidth, _innerHeight),
   1.5,
   0.4,
   0.85
@@ -607,8 +602,8 @@ finalComposer.addPass(renderScene);
 finalComposer.addPass(mixPass);
 finalComposer.addPass(outputPass);
 
-finalComposer.setSize(window.innerWidth, window.innerHeight);
-glowComposer.setSize(window.innerWidth, window.innerHeight);
+finalComposer.setSize(_innerWidth, _innerHeight);
+glowComposer.setSize(_innerWidth, _innerHeight);
 
 {
   {
@@ -741,13 +736,14 @@ const changeComposerCamera = (camera) => {
   glowComposer.insertPass(renderScene, 0);
   finalComposer.insertPass(renderScene, 0);
 };
-function updateModelsLabel() {
+function updateLabels() {
   if (renderCamera !== personCamera) return;
   const camera_position = renderCamera.getWorldPosition(new THREE.Vector3());
   labelModels.forEach((model) => {
     model.label.element.style.visibility = "visible";
     model.label.lookAt(camera_position);
   });
+  labelRenderer.render(scene, renderCamera);
 }
 function createLabelByModel(model) {
   const labelDiv = document.createElement("div");
@@ -855,7 +851,7 @@ const keyStates = {
   arrowleft: false,
   arrowright: false,
 };
-const moveCloudGroup = () => {
+const moveCloud = () => {
   const clouds = cloudGroup.children;
   clouds.forEach((cloud) => {
     cloud.position.z += cloudSpeed;
@@ -898,7 +894,6 @@ const validateBorder = () => {
 // targetMesh.position.set(0, 0, 0);
 // groundGroup.add(targetMesh);
 
-
 function moveFoxModelByCurve(curve) {
   const foxCurve = curve;
   return function (time) {
@@ -915,7 +910,7 @@ function moveFoxModelByCurve(curve) {
     fox_model.rotateY(Math.PI / 2);
   };
 }
-const moveFoxModel = moveFoxModelByCurve(curve);
+const moveFox = moveFoxModelByCurve(curve);
 
 const moveFirstViewGroup = () => {
   const y_rotationAngle = personGroup.rotation.y;
@@ -935,45 +930,52 @@ const rotatePerson = () => {
     (keyStates["q"] - keyStates["e"]) * 0.003 * 2 * Math.PI;
   personGroup.rotation.y += y_rotationAngle;
 };
-const refreshSpeed = (fps) => {
+const calculateSpeed = (fps) => {
   moveSpeed = baseMoveSpeed * (60 / fps);
   cloudSpeed = baseCloudSpeed * (60 / fps);
 };
 
-animate();
+function updateMixer(delta) {
+  steve_mixer && steve_mixer.update(delta);
+  fox_mixer && fox_mixer.update(delta);
+}
 
-function animate(lastTime = 0) {
-  const curTime = Date.now();
-  const fps = ~~(1000 / (curTime - lastTime)) || 60;
-
-  requestAnimationFrame(() => animate(curTime));
-
-  // 根据键盘状态移动物体
-  rotatePerson();
-  refreshSpeed(fps);
-  moveFirstViewGroup();
-  moveFoxModel(lastTime);
-  moveCloudGroup();
-  controls.update();
-  
+function composerRender() {
   scene.traverse(darkenNonBloomed);
   glowComposer.render();
 
   scene.traverse(restoreMaterial);
   finalComposer.render();
+}
 
-  const delta = clock.getDelta();
-  steve_mixer && steve_mixer.update(delta);
-  fox_mixer && fox_mixer.update(delta);
-  updateModelsLabel();
-  labelRenderer.render(scene, renderCamera);
+animate();
+
+function animate(lastTime = 0) {
+  requestAnimationFrame(() => animate(curTime));
+  controls.update();
+  composerRender();
   // renderer.render(scene, renderCamera);
+
+  const curTime = Date.now();
+  const fps = ~~(1000 / (curTime - lastTime)) || 60;
+
+  rotatePerson();
+  calculateSpeed(fps);
+
+  moveCloud();
+  moveFox(lastTime);
+  moveFirstViewGroup();
+
+  updateLabels();
+  updateMixer(clock.getDelta());
 }
 
 window.onresize = () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  personCamera.aspect = window.innerWidth / window.innerHeight;
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  _innerWidth = window.innerWidth;
+  _innerHeight = window.innerHeight;
+  camera.aspect = _aspect;
+  personCamera.aspect = _aspect;
+  renderer.setSize(_innerWidth, _innerHeight);
   camera.updateProjectionMatrix();
   personCamera.updateProjectionMatrix();
 };
@@ -1033,7 +1035,7 @@ function startGame() {
   document.getElementById("menu").style.pointerEvents = "none";
   document.getElementById("menu").style.transform = "translate(-50%, -100%)";
   document.body.style.filter = "blur(10px)";
-  lockPointer(renderer);
+  lockPointer();
   setTimeout(() => {
     document.getElementById("menu").style.display = "none";
     document.getElementById("ui").style.display = "flex";
