@@ -32,8 +32,8 @@ labelRenderer.domElement.style.top = "0";
 labelRenderer.domElement.style.pointerEvents = "none";
 document.body.appendChild(labelRenderer.domElement);
 
-const sceneWidth = 100;
-const sceneHeight = 80;
+const basicWidth = 100;
+const basicHeight = 80;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("black");
 
@@ -150,18 +150,23 @@ const incrementProgress = addProgress(0);
 
 const loadModel = (path) =>
   new Promise((resolve) => {
-    gltfLoader.load(path, function (glb) {
-      const model = glb.scene;
-      model.receiveShadow = true;
-      model.castShadow = true;
-      model.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-      resolve(glb);
-    });
+    gltfLoader.load(
+      path,
+      (glb) => {
+        const model = glb.scene;
+        model.receiveShadow = true;
+        model.castShadow = true;
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        resolve(glb);
+      },
+      () => {},
+      (e) => console.warn(path + " failed \n [reason] " + e.message)
+    );
   }).finally(() => incrementProgress(10));
 
 const modelsLoader = {
@@ -179,7 +184,6 @@ const modelsLoader = {
     ),
   cloudLoader: () => Promise.all(cloudPaths.map((path) => loadModel(path))),
 };
-// let countModel = modelsLoader.;
 
 // 增加 半球光
 {
@@ -198,13 +202,12 @@ const modelsLoader = {
   const intensity = 10;
   const light = new THREE.DirectionalLight(color, intensity);
   light.castShadow = true;
-  light.shadow.camera.left = sceneWidth / -2;
-  light.shadow.camera.right = sceneWidth / 2;
-  light.shadow.camera.top = sceneHeight / -1;
-  light.shadow.camera.bottom = sceneHeight / 1;
+  light.shadow.camera.left = basicWidth / -2;
+  light.shadow.camera.right = basicWidth / 2;
+  light.shadow.camera.top = basicHeight / -1;
+  light.shadow.camera.bottom = basicHeight / 1;
   light.shadow.camera.far = 90;
   light.position.set(0, 55, 30);
-  light.target.position.set(0, 0, 0);
   // const helper = new THREE.DirectionalLightHelper(light);
   // const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
   // scene.add(cameraHelper);
@@ -245,8 +248,8 @@ const labelModels = [];
 groundGroup.add(firstViewGroup);
 {
   // 生成地板
-  const groundWidth = sceneWidth;
-  const groundHeight = sceneHeight;
+  const groundWidth = basicWidth;
+  const groundHeight = basicHeight;
 
   const roundTexture = new THREE.TextureLoader().load("./texture/floor2.png");
   roundTexture.wrapS = THREE.RepeatWrapping;
@@ -255,10 +258,7 @@ groundGroup.add(firstViewGroup);
   roundTexture.colorSpace = THREE.SRGBColorSpace;
   roundTexture.repeat.set(groundWidth / 2, groundHeight / 2);
 
-  const roundGeometry = new THREE.PlaneGeometry(
-    groundWidth * 1.5,
-    groundHeight * 1.5
-  );
+  const roundGeometry = new THREE.PlaneGeometry(groundWidth, groundHeight);
   const roundMaterial = new THREE.MeshPhongMaterial({
     side: THREE.DoubleSide,
     map: roundTexture,
@@ -405,23 +405,6 @@ groundGroup.add(firstViewGroup);
     const model = glb.scene;
     model.position.set(15, 2, 1);
     groundGroup.add(model);
-
-    // // 获取模型的边界框
-    // const box = new THREE.Box3().setFromObject(model);
-    // const modelWidth = box.getSize(new THREE.Vector3()).x;
-    // const modelHeight = box.getSize(new THREE.Vector3()).z;
-
-    // // 计算在地面上需要放置多少个模型
-    // const cols = Math.floor(groundWidth / modelWidth);
-    // const rows = Math.floor(groundHeight / modelHeight);
-
-    // for (let i = 0; i < cols; i++) {
-    //   for (let j = 0; j < rows; j++) {
-    //     const clone = model.clone();
-    //     clone.position.set(i * modelWidth, -2, j * modelHeight);
-    //     groundGroup.add(clone);
-    //   }
-    // }
   });
 
   modelsLoader.villageLoader().then((glb) => {
@@ -517,8 +500,8 @@ const cloudGroup = new THREE.Group();
 skyGroup.add(cloudGroup);
 
 // 后期处理
-const skyWidth = sceneWidth;
-const skyHeight = sceneHeight;
+const skyWidth = basicWidth;
+const skyHeight = basicHeight;
 const params = {
   threshold: 0, // 辉光强度
   strength: 0.8, // 辉光阈值
@@ -653,9 +636,9 @@ glowComposer.setSize(_innerWidth, _innerHeight);
 // 天空盒
 {
   const skyBoxGeoMetry = new THREE.BoxGeometry(
-    sceneWidth,
-    sceneHeight,
-    sceneHeight
+    basicWidth,
+    basicHeight,
+    basicHeight
   );
   // 创建渐变 将Canvas作为纹理
   let texture;
@@ -873,8 +856,8 @@ const computedMoveDistance = (speed, states, angle) => {
   const z_distance = speed * (sin * right + cos * forward);
   return [x_distance, z_distance];
 };
-const maxBorderHeight = sceneHeight / 2 - 2;
-const maxBorderWidth = sceneWidth / 2 - 2;
+const maxBorderHeight = basicHeight / 2 - 2;
+const maxBorderWidth = basicWidth / 2 - 2;
 const validateBorder = () => {
   const { x, z } = firstViewGroup.position;
   const isOut =
