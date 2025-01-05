@@ -468,23 +468,9 @@ groundGroup.add(firstViewGroup);
       sunMesh.layers.enable(BLOOM_SCENE);
     }
 
-    // 瞄准的基准点
-    const targetElevation = new THREE.Object3D();
-    targetElevation.position.set(0, 1.9, 5);
-    const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-    const material = new THREE.MeshBasicMaterial({
-      color: "red",
-    });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.visible = false;
-    targetElevation.add(cube);
-    targetElevation.name = "targetElevation";
-    personGroup.add(targetElevation);
-
     personGroup.add(personCamera);
     personCamera.position.setY(1.8);
     personCamera.position.setZ(0.5);
-    // personCamera.lookAt(cube.getWorldPosition(new THREE.Vector3()));
     personCamera.rotateY(Math.PI);
     personCamera.rotation.x = Math.PI;
     personCamera.updateMatrixWorld();
@@ -542,10 +528,7 @@ let renderScene = new RenderPass(scene, renderCamera); // 创建一个渲染通�
 
 // 创建辉光效果
 const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(_innerWidth, _innerHeight),
-  1.5,
-  0.4,
-  0.85
+  new THREE.Vector2(_innerWidth, _innerHeight)
 );
 bloomPass.threshold = params.threshold;
 bloomPass.strength = params.strength;
@@ -558,7 +541,6 @@ pixelationPass.needsSwap = true;
 // 辉光合成器
 const glowComposer = new EffectComposer(renderer);
 glowComposer.renderToScreen = false;
-glowComposer.addPass(renderScene);
 glowComposer.addPass(bloomPass);
 glowComposer.addPass(pixelationPass);
 
@@ -575,7 +557,6 @@ const mixPass = new ShaderPass(
   }),
   "baseTexture"
 );
-mixPass.needsSwap = true;
 
 const outputPass = new OutputPass();
 
@@ -788,18 +769,15 @@ const min_x_rotation = Math.PI * 1.3;
 function onMouseMove(event) {
   if (renderCamera !== personCamera) return;
 
-  let x_rotationAngle;
-  let y_rotationAngle;
-
   const move_x = Math.abs(event.movementX) > 1 ? event.movementX : 0;
   const move_y = Math.abs(event.movementY) > 1 ? event.movementY : 0;
 
-  x_rotationAngle = move_y * 0.0012 * Math.PI;
-  y_rotationAngle = -move_x * 0.0006 * Math.PI;
+  const x_rotate = move_y * 0.0012 * Math.PI;
+  const y_rotate = -move_x * 0.0006 * Math.PI;
 
-  personGroup.rotation.y += y_rotationAngle;
+  personGroup.rotation.y += y_rotate;
   personCamera.rotation.x = Math.min(
-    Math.max(personCamera.rotation.x + x_rotationAngle, max_x_rotation),
+    Math.max(personCamera.rotation.x + x_rotate, max_x_rotation),
     min_x_rotation
   );
 }
@@ -847,13 +825,13 @@ const moveCloud = () => {
 const computedMoveDistance = (speed, states, angle) => {
   const sin = Math.sin(angle);
   const cos = Math.cos(angle);
-  const forward =
+  const front =
     (states["w"] || states["arrowup"]) - (states["s"] || states["arrowdown"]);
   const right =
     (states["d"] || states["arrowright"]) -
     (states["a"] || states["arrowleft"]);
-  const x_distance = speed * (sin * forward - cos * right);
-  const z_distance = speed * (sin * right + cos * forward);
+  const x_distance = speed * (sin * front - cos * right);
+  const z_distance = speed * (sin * right + cos * front);
   return [x_distance, z_distance];
 };
 const maxBorderHeight = basicHeight / 2 - 2;
@@ -871,12 +849,6 @@ const validateBorder = () => {
   showOutBorder();
 };
 
-// const targetGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-// const targetMaterial = new THREE.MeshBasicMaterial({ color: "white" });
-// const targetMesh = new THREE.Mesh(targetGeometry, targetMaterial);
-// targetMesh.position.set(0, 0, 0);
-// groundGroup.add(targetMesh);
-
 function moveFoxModelByCurve(curve) {
   const foxCurve = curve;
   return function (time) {
@@ -888,14 +860,13 @@ function moveFoxModelByCurve(curve) {
     const [targetX, targetZ] = foxCurve.getPointAt(_progress);
 
     fox_model.position.set(positionX, fox_model.position.y, positionZ);
-    // targetMesh.position.set(targetX, fox_model.position.y, targetZ);
     fox_model.lookAt(targetX, fox_model.position.y, targetZ);
     fox_model.rotateY(Math.PI / 2);
   };
 }
 const moveFox = moveFoxModelByCurve(curve);
 
-const moveFirstViewGroup = () => {
+function moveFirstViewGroup() {
   const y_rotationAngle = personGroup.rotation.y;
   const [x_distance, z_distance] = computedMoveDistance(
     moveSpeed,
@@ -907,7 +878,7 @@ const moveFirstViewGroup = () => {
   firstViewGroup.position.x += x_distance;
   firstViewGroup.position.z += z_distance;
   validateBorder();
-};
+}
 const rotatePerson = () => {
   const y_rotationAngle =
     (keyStates["q"] - keyStates["e"]) * 0.003 * 2 * Math.PI;
