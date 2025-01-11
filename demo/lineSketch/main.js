@@ -10,7 +10,7 @@ import {
   CSS2DRenderer,
   CSS2DObject,
 } from "three/addons/renderers/CSS2DRenderer.js";
-import { showToast, loadModel, loadTexture } from "./utils/index.js";
+import { showToast, loadModel, loadTexture, getSketchInfos, createSketch } from "./utils/index.js";
 
 class App {
   scene = null;
@@ -20,8 +20,6 @@ class App {
 
   constructor(container) {
     this.container = container;
-    console.log("container", container);
-
     container && this.init();
   }
 
@@ -29,6 +27,7 @@ class App {
     // 初始化场景
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color("#212121");
+    this.scene.colorSpace = THREE.SRGBColorSpace;
 
     // 初始化相机
     this.camera = new THREE.PerspectiveCamera(
@@ -37,7 +36,8 @@ class App {
       0.1,
       1000
     );
-    this.camera.position.z = 5;
+    this.camera.position.z = 2.5;
+    this.camera.position.y = 2;
 
     // 初始化渲染器
     this.renderer = new THREE.WebGLRenderer({
@@ -46,9 +46,11 @@ class App {
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer;
-    this.controls = new OrbitControls(this.camera, this.container);
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
 
+    // 创建轨道控制器
+    this.controls = new OrbitControls(this.camera, this.container);
+    this.controls.enableDamping = true;
     window.addEventListener("resize", this.onResize.bind(this));
   }
 
@@ -69,20 +71,34 @@ const app = new App(document.getElementById("container"));
 
 app.animate();
 
-// 在场景中添加物体
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-console.log(cube);
-
+// 加载模型
 loadModel("gpu.glb").then((glb) => {
+  console.log(glb);
   const model = glb.scene;
-  app.scene.add(model);
+  model.scale.set(2, 2, 2);
+  model.position.x = 2;
+  const sketchInfos = getSketchInfos(model);
+  const sketch = createSketch(sketchInfos);
+  // model.traverse((item) => {
+  //   if (item.isMesh) {
+  //     console.log(item);
+  //   }
+  // });
+  // app.scene.add(model);
+  app.scene.add(sketch);
 });
 
+// 加载背景贴图
 loadTexture("background.png").then((texture) => {
   texture.colorSpace = THREE.SRGBColorSpace;
   app.scene.background = texture;
 });
 
-app.scene.add(cube);
+// 添加光源
+const ambientLight = new THREE.AmbientLight("#2f2f2f", 40);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 6);
+directionalLight.position.set(1, 2, 5);
+
+app.scene.add(directionalLight);
+app.scene.add(ambientLight);
