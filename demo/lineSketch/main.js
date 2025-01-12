@@ -6,10 +6,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import {
-  CSS2DRenderer,
-  CSS2DObject,
-} from "three/addons/renderers/CSS2DRenderer.js";
+
 import {
   showToast,
   loadModel,
@@ -23,6 +20,7 @@ class App {
   camera = null;
   renderer = null;
   controls = null;
+  composer = null;
 
   constructor(container) {
     this.container = container;
@@ -58,18 +56,47 @@ class App {
     this.controls = new OrbitControls(this.camera, this.container);
     this.controls.enableDamping = true;
     window.addEventListener("resize", this.onResize.bind(this));
+
+    // 注册composer
+    this.setupComposer();
   }
 
   onResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.composer &&
+      this.composer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  setupComposer() {
+    const renderPass = new RenderPass(this.scene, this.camera);
+    const params = {
+      threshold: 0.2,
+      strength: 0.35,
+      radius: 0,
+    };
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight)
+    );
+    bloomPass.threshold = params.threshold;
+    bloomPass.strength = params.strength;
+    bloomPass.radius = params.radius;
+
+    const outputPass = new OutputPass();
+
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(renderPass);
+    this.composer.addPass(bloomPass);
+    this.composer.addPass(outputPass);
   }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     this.controls.update();
-    this.renderer.render(this.scene, this.camera);
+    this.composer
+      ? this.composer.render()
+      : this.renderer.render(this.scene, this.camera);
   }
 }
 
