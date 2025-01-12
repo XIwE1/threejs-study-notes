@@ -1,8 +1,7 @@
 import * as THREE from "three";
 
-function getSketchInfos(model) {
-  const sketchInfos = [];
-  model.traverse((mesh) => {
+function getSketchInfos(meshs) {
+  const sketchInfos = meshs.map((mesh) => {
     if (mesh.isMesh) {
       // 获取四元数
       const quaternion = new THREE.Quaternion();
@@ -16,13 +15,12 @@ function getSketchInfos(model) {
 
       mesh.material.transparent = true;
       mesh.material.opacity = 0.4;
-
-      sketchInfos.push({
+      return {
         geometry: mesh.geometry,
         quaternion,
         worldPos,
         worldScale,
-      });
+      };
     }
   });
   return sketchInfos;

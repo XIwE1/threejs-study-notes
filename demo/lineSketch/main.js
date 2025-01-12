@@ -10,7 +10,13 @@ import {
   CSS2DRenderer,
   CSS2DObject,
 } from "three/addons/renderers/CSS2DRenderer.js";
-import { showToast, loadModel, loadTexture, getSketchInfos, createSketch } from "./utils/index.js";
+import {
+  showToast,
+  loadModel,
+  loadTexture,
+  getSketchInfos,
+  createSketch,
+} from "./utils/index.js";
 
 class App {
   scene = null;
@@ -77,15 +83,30 @@ loadModel("gpu.glb").then((glb) => {
   const model = glb.scene;
   model.scale.set(2, 2, 2);
   model.position.x = 2;
-  const sketchInfos = getSketchInfos(model);
-  const sketch = createSketch(sketchInfos);
-  // model.traverse((item) => {
-  //   if (item.isMesh) {
-  //     console.log(item);
-  //   }
-  // });
   // app.scene.add(model);
+
+  // 根据模型生成边缘轮廓
+  const meshs = [];
+  const fanMeshs = [];
+  const fanName = [
+    "left_darker_Black_Plastic_001_0",
+    "Plane_darker_Black_Plastic_001_0",
+    "Plane044_darker_Black_Plastic_001_0",
+    "left002_darker_Black_Plastic_001_0",
+  ];
+  model.traverse((item) => {
+    if (item.isMesh) {
+      if (fanName.includes(item.name)) fanMeshs.push(item);
+      else meshs.push(item);
+    }
+  });
+  const sketchInfos = getSketchInfos(meshs);
+  const _sketchInfos = getSketchInfos(fanMeshs);
+  const sketch = createSketch(sketchInfos);
+  const _sketch = createSketch(_sketchInfos, "lightgreen", 0.8);
+
   app.scene.add(sketch);
+  app.scene.add(_sketch);
 });
 
 // 加载背景贴图
