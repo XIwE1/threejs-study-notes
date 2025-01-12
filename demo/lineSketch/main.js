@@ -96,8 +96,7 @@ loadModel("gpu.glb").then((glb) => {
   ];
   model.traverse((item) => {
     if (item.isMesh) {
-      if (fanName.includes(item.name)) fanMeshs.push(item);
-      else meshs.push(item);
+      fanName.includes(item.name) ? fanMeshs.push(item) : meshs.push(item);
     }
   });
   const sketchInfos = getSketchInfos(meshs);
@@ -107,6 +106,13 @@ loadModel("gpu.glb").then((glb) => {
 
   app.scene.add(sketch);
   app.scene.add(_sketch);
+
+  // 旋转扇叶
+  setInterval(() => {
+    _sketch.children.forEach((item) => {
+      item.rotation.z += 0.2;
+    });
+  }, 16);
 });
 
 // 加载背景贴图
