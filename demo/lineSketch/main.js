@@ -1,11 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
 
 import {
   showToast,
@@ -13,6 +9,8 @@ import {
   loadTexture,
   getSketchInfos,
   createSketch,
+  setupComposer,
+  PickHelper
 } from "./utils/index.js";
 
 class App {
@@ -21,6 +19,7 @@ class App {
   renderer = null;
   controls = null;
   composer = null;
+  picker = null;
 
   constructor(container) {
     this.container = container;
@@ -58,7 +57,9 @@ class App {
     window.addEventListener("resize", this.onResize.bind(this));
 
     // 注册composer
-    this.setupComposer();
+    this.composer = setupComposer(this.scene, this.camera, this.renderer);
+    // 创建拾取器picker
+    this.picker = new PickHelper(this.container);
   }
 
   onResize() {
@@ -69,31 +70,12 @@ class App {
       this.composer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  setupComposer() {
-    const renderPass = new RenderPass(this.scene, this.camera);
-    const params = {
-      threshold: 0.2,
-      strength: 0.35,
-      radius: 0,
-    };
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight)
-    );
-    bloomPass.threshold = params.threshold;
-    bloomPass.strength = params.strength;
-    bloomPass.radius = params.radius;
 
-    const outputPass = new OutputPass();
-
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(renderPass);
-    this.composer.addPass(bloomPass);
-    this.composer.addPass(outputPass);
-  }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     this.controls.update();
+    this.picker.pick(this.scene, this.camera);
     this.composer
       ? this.composer.render()
       : this.renderer.render(this.scene, this.camera);
@@ -110,7 +92,7 @@ loadModel("gpu.glb").then((glb) => {
   const model = glb.scene;
   model.scale.set(2, 2, 2);
   model.position.x = 2;
-  // app.scene.add(model);
+  app.scene.add(model);
 
   // 根据模型生成边缘轮廓
   const meshs = [];
@@ -131,8 +113,8 @@ loadModel("gpu.glb").then((glb) => {
   const sketch = createSketch(sketchInfos);
   const _sketch = createSketch(_sketchInfos, "lightgreen", 0.8);
 
-  app.scene.add(sketch);
-  app.scene.add(_sketch);
+  // app.scene.add(sketch);
+  // app.scene.add(_sketch);
 
   // 旋转扇叶
   setInterval(() => {
@@ -151,7 +133,7 @@ loadTexture("background.png").then((texture) => {
 // 添加光源
 const ambientLight = new THREE.AmbientLight("#2f2f2f", 40);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 6);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
 directionalLight.position.set(1, 2, 5);
 
 app.scene.add(directionalLight);

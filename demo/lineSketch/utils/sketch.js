@@ -13,8 +13,6 @@ function getSketchInfos(meshs) {
       const worldScale = new THREE.Vector3();
       mesh.getWorldScale(worldScale);
 
-      mesh.material.transparent = true;
-      mesh.material.opacity = 0.4;
       return {
         geometry: mesh.geometry,
         quaternion,
