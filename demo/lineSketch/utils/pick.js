@@ -31,10 +31,10 @@ class PickHelper {
       const material = this.pickedObject.material;
       this.pickedObjectSavedColor = getMaterialColor(material);
       //   this.pickedObject.scale.set(1.2, 1.2, 1.2);
-    //   this.pickedObject.material.transparent = true;
-    //   this.pickedObject.material.opacity = 0.3;
+      //   this.pickedObject.material.transparent = true;
+      //   this.pickedObject.material.opacity = 0.3;
       // 设置它的发光为 黄色/红色闪烁
-      setMaterialColor(material, (time * 8) % 2 > 1 ? 0xE0FFE0 : 0x90EE90);
+      setMaterialColor(material, (time * 8) % 2 > 1 ? 0xe0ffe0 : 0x90ee90);
     }
   }
 }
