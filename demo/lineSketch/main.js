@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 
-
 import {
   showToast,
   loadModel,
@@ -10,7 +9,7 @@ import {
   getSketchInfos,
   createSketch,
   setupComposer,
-  PickHelper
+  PickHelper,
 } from "./utils/index.js";
 
 class App {
@@ -70,8 +69,6 @@ class App {
       this.composer.setSize(window.innerWidth, window.innerHeight);
   }
 
-
-
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     this.controls.update();
@@ -79,6 +76,7 @@ class App {
     this.composer
       ? this.composer.render()
       : this.renderer.render(this.scene, this.camera);
+    // this.renderer.render(this.scene, this.camera);
   }
 }
 

@@ -37,12 +37,13 @@ function createLine(material) {
   };
 }
 
-function createSketch(sketchInfos, color = "#0fb2fb", opacity = 1) {
+function createSketch(sketchInfos, color = "#0fb2fb", opacity = 0.8) {
   const material = new THREE.LineBasicMaterial({
     color: new THREE.Color(color),
     transparent: true,
     opacity,
   });
+  
   const createLineWithMaterial = createLine(material);
 
   const sketch = new THREE.Group();
