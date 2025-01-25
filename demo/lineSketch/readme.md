@@ -125,6 +125,68 @@ class PickHelper {
 }
 ```
 
+## clipping 效果
+
+平面（Plane）https://threejs.org/docs/index.html?q=plane#api/zh/math/Plane ,在三维空间中无限延伸的二维平面
+
+Plane( normal : Vector3, constant : Float )
+normal - (可选参数) 定义单位长度的平面法向量 Vector3。默认值为 (1, 0, 0)。
+constant - (可选参数) 从原点到平面的有符号距离。 默认值为 0.
+
+增加 helper
+
+```js
+// helpers
+const helpers = new THREE.Group();
+helpers.add(new THREE.PlaneHelper(clipPlanes[0], 2, 0xff0000));
+helpers.add(new THREE.PlaneHelper(clipPlanes[1], 2, 0x00ff00));
+helpers.add(new THREE.PlaneHelper(clipPlanes[2], 2, 0x0000ff));
+helpers.visible = false;
+scene.add(helpers);
+```
+
+```js
+this.renderer.localClippingEnabled = true;
+
+const plane = new THREE.Plane(new THREE.Vector3(2, 0, 0), x_range[1]);
+this.clipPlanes.push(plane);
+
+const material = new THREE.MeshPhongMaterial({
+  color: new THREE.Color().setHSL(
+    Math.random(),
+    0.5,
+    0.5,
+    THREE.SRGBColorSpace
+  ),
+  side: THREE.DoubleSide,
+  clippingPlanes: this.clipPlanes, // 指定材质的剪裁面，如果是模型material需要traverse迭代
+  clipIntersection: params.clipIntersection,
+  alphaToCoverage: true,
+});
+// 获取模型边界 用于灵活设置constant
+function computedRange(model) {
+  const box = new THREE.Box3().setFromObject(model);
+  const max = box.max;
+  const min = box.min;
+
+  return [min.x, max.x];
+}
+```
+
+`.clipIntersection` 更改剪裁平面的行为，以便仅剪切其交叉点，而不是它们的并集
+
+`.clippingPlanes` 用户定义的剪裁平面，在世界空间中指定为 THREE.Plane 对象。这些平面适用于所有使用此材质的对象
+
+`clipPlanes[ j ].constant = value;` 修改剪裁平台
+
+示例：
+
+https://threejs.org/examples/#webgl_clipping_intersection
+
+```js
+
+```
+
 removeFromParent 删除原有模型
 
 TODOList:
