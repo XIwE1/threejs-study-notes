@@ -9,6 +9,7 @@ const loadModel = (path, onProgress) =>
       path,
       (glb) => {
         const model = glb.scene;
+        // 设置shadow
         model.receiveShadow = true;
         model.castShadow = true;
         model.traverse((child) => {
