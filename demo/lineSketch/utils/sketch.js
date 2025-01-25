@@ -27,9 +27,11 @@ function getSketchInfos(meshs) {
 function createLine(material) {
   return function (sketchInfo, angle = 1) {
     const { geometry, quaternion, worldPos, worldScale } = sketchInfo;
+    // 创建边缘几何体，以此创建线段
     const edges = new THREE.EdgesGeometry(geometry, angle);
     const line = new THREE.LineSegments(edges);
     line.material = material;
+    // 通过四元数获取正确的旋转
     line.quaternion.copy(quaternion);
     line.position.copy(worldPos);
     line.scale.copy(worldScale);
@@ -43,7 +45,7 @@ function createSketch(sketchInfos, color = "#0fb2fb", opacity = 0.8) {
     transparent: true,
     opacity,
   });
-  
+
   const createLineWithMaterial = createLine(material);
 
   const sketch = new THREE.Group();

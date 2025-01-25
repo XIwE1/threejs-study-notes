@@ -11,6 +11,7 @@ class App {
   picker = null;
   callbacks = [];
 
+  // todo:接收scene、camera、renderer...而非自己生成
   constructor(container) {
     this.container = container;
     container && this.init();
