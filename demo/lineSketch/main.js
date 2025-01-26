@@ -22,9 +22,8 @@ loadModel("gpu.glb").then((glb) => {
   const model = glb.scene;
   model.scale.set(2, 2, 2);
   model.position.x = 2;
-  app.scene.add(model);
-
-  clipping = new Clip(model, app.renderer);
+  // app.scene.add(model);
+  // clipping = new Clip(model, app.renderer);
 
   // 根据模型生成边缘轮廓
   const meshs = [];
@@ -50,6 +49,12 @@ loadModel("gpu.glb").then((glb) => {
   // app.scene.add(sketch);
   // app.scene.add(_sketch);
 
+  const sketchGroup = new THREE.Group();
+  sketchGroup.add(sketch);
+  sketchGroup.add(_sketch);
+  app.scene.add(sketchGroup);
+  clipping = new Clip(sketchGroup, app.renderer);
+
   // 旋转扇叶
   setInterval(() => {
     _sketch.children.forEach((item) => {
@@ -74,59 +79,10 @@ app.scene.add(directionalLight);
 app.scene.add(ambientLight);
 
 // 设置剪裁动画
-const clipTime = 50;
-function changeConstant() {
-  let nowConstant = clipping.clipPlanes[0].constant;
-  const step = (clipping.range[1] - clipping.range[0]) / clipTime;
-  const max = clipping.range[1];
-  const min = clipping.range[0];
-  return (isStart) => {
-    let result = nowConstant - (2 * isStart - 1) * step;
-
-    if (isStart) {
-      result = result < min ? min : result;
-    } else {
-      result = result > max ? max : result;
-    }
-
-    clipping.setConstant(result);
-    nowConstant = result;
-  };
-}
-
-let startTimer;
-let startInterval;
-let endInterval;
-// 点击持续时间后开始
 app.container.addEventListener("pointerdown", () => {
-  clearInterval(endInterval);
-
-  const changeConstantThrottle = throttle(changeConstant(), 32);
-  startTimer = setTimeout(() => {
-    startInterval = setInterval(() => {
-      if (clipping.clipPlanes[0].constant === clipping.range[0]) {
-        clearTimeout(startTimer);
-        clearInterval(startInterval);
-      }
-      changeConstantThrottle(true);
-    }, 16);
-  }, 200);
+  clipping.cover();
 });
-// 抬起播放结束效果
+// 抬起播放恢复动画
 app.container.addEventListener("pointerup", () => {
-  clearTimeout(startTimer);
-  clearInterval(startInterval);
-
-  const changeConstantThrottle = throttle(changeConstant(), 32);
-  endInterval = setInterval(() => {
-    if (clipping.clipPlanes[0].constant === clipping.range[1]) {
-      clearInterval(endInterval);
-    }
-    changeConstantThrottle(false);
-  }, 16);
-});
-
-app.container.addEventListener("pointerout", () => {
-  clearTimeout(startTimer);
-  clearInterval(startInterval);
+  clipping.restore();
 });

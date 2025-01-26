@@ -1,6 +1,8 @@
 import * as THREE from "three";
 
 class Clip {
+  isAnimating = false;
+  animationId = null;
   model = null;
   clipPlanes = [];
   renderer = null;
@@ -15,7 +17,45 @@ class Clip {
     this.init();
   }
 
-  toggoleIntersection() {}
+  animate(isReStore, timeStamp, lastTime = 0) {
+    if (timeStamp - lastTime > 25) {
+      lastTime = timeStamp;
+      const max = this.range[1];
+      const min = this.range[0];
+      const step = (max - min) / 50;
+      this.isAnimating = true;
+
+      let result = this.clipPlanes[0].constant + (2 * !!isReStore - 1) * step;
+
+      if (isReStore) {
+        result = result > max ? max : result;
+      } else {
+        result = result < min ? min : result;
+      }
+
+      this.setConstant(result);
+      if (result === this.range[+isReStore]) return this.stopAnimate();
+    }
+    this.animationId = requestAnimationFrame((now) =>
+      this.animate(isReStore, now, lastTime)
+    );
+  }
+
+  stopAnimate() {
+    this.animationId && cancelAnimationFrame(this.animationId);
+    this.animationId = null;
+    this.isAnimating = false;
+  }
+
+  cover() {
+    this.stopAnimate();
+    requestAnimationFrame((timeStamp) => this.animate(false, timeStamp));
+  }
+
+  restore() {
+    this.stopAnimate();
+    requestAnimationFrame((timeStamp) => this.animate(true, timeStamp));
+  }
 
   setConstant(constant) {
     this.clipPlanes[0].constant = constant;
@@ -33,7 +73,7 @@ class Clip {
 
     // 修改模型材质设置剪裁面
     this.model.traverse((child) => {
-      if (child.isMesh) {
+      if (child.isMesh || child.isLineSegments) {
         child.material.clippingPlanes = this.clipPlanes;
         child.material.clipShadows = true;
       }
