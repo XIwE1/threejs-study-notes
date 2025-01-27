@@ -17,13 +17,14 @@ const app = new App(document.getElementById("container"));
 app.animate();
 
 let clipping;
+let clipping2;
 // 加载模型
 loadModel("gpu.glb").then((glb) => {
   const model = glb.scene;
   model.scale.set(2, 2, 2);
   model.position.x = 2;
-  // app.scene.add(model);
-  // clipping = new Clip(model, app.renderer);
+  app.scene.add(model);
+  clipping = new Clip(model, app.renderer);
 
   // 根据模型生成边缘轮廓
   const meshs = [];
@@ -53,7 +54,20 @@ loadModel("gpu.glb").then((glb) => {
   sketchGroup.add(sketch);
   sketchGroup.add(_sketch);
   app.scene.add(sketchGroup);
-  clipping = new Clip(sketchGroup, app.renderer);
+  clipping2 = new Clip(sketchGroup, app.renderer);
+  clipping2.invert();
+
+  // const box = new THREE.Box3().setFromObject(sketchGroup);
+
+  // const helper = new THREE.Box3Helper(box, 0xffff00);
+  // console.log("helper", helper);
+
+  // app.scene.add(helper);
+
+  // const helpers = new THREE.Group();
+  // helpers.add(new THREE.PlaneHelper(clipping.clipPlanes[0], 2, 0xff0000));
+  // helpers.visible = true;
+  // app.scene.add(helpers);
 
   // 旋转扇叶
   setInterval(() => {
@@ -81,8 +95,10 @@ app.scene.add(ambientLight);
 // 设置剪裁动画
 app.container.addEventListener("pointerdown", () => {
   clipping.cover();
+  clipping2.cover();
 });
 // 抬起播放恢复动画
 app.container.addEventListener("pointerup", () => {
   clipping.restore();
+  clipping2.restore();
 });
