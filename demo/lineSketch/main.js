@@ -2,14 +2,12 @@ import * as THREE from "three";
 import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 
 import {
-  showToast,
   loadModel,
   loadTexture,
   getSketchInfos,
   createSketch,
   App,
   Clip,
-  throttle,
 } from "./utils/index.js";
 
 const app = new App(document.getElementById("container"));
@@ -24,7 +22,7 @@ loadModel("gpu.glb").then((glb) => {
   model.scale.set(2, 2, 2);
   model.position.x = 2;
   app.scene.add(model);
-  clipping = new Clip(model, app.renderer);
+  clipping = new Clip(app.scene, model, app.renderer);
 
   // 根据模型生成边缘轮廓
   const meshs = [];
@@ -53,21 +51,19 @@ loadModel("gpu.glb").then((glb) => {
   const sketchGroup = new THREE.Group();
   sketchGroup.add(sketch);
   sketchGroup.add(_sketch);
-  app.scene.add(sketchGroup);
-  clipping2 = new Clip(sketchGroup, app.renderer);
-  clipping2.invert();
+  // app.scene.add(sketchGroup);
 
-  // const box = new THREE.Box3().setFromObject(sketchGroup);
+  // clipping2 = new Clip(app.scene, sketchGroup, app.renderer);
+  // clipping2.invert();
 
-  // const helper = new THREE.Box3Helper(box, 0xffff00);
-  // console.log("helper", helper);
+  const box = new THREE.Box3().setFromObject(sketchGroup);
+  const helper = new THREE.Box3Helper(box, 0xffff00);
+  app.scene.add(helper);
 
-  // app.scene.add(helper);
-
-  // const helpers = new THREE.Group();
-  // helpers.add(new THREE.PlaneHelper(clipping.clipPlanes[0], 2, 0xff0000));
-  // helpers.visible = true;
-  // app.scene.add(helpers);
+  const helpers = new THREE.Group();
+  helpers.add(new THREE.PlaneHelper(clipping.clipPlanes[0], 2, 0xff0000));
+  helpers.visible = true;
+  app.scene.add(helpers);
 
   // 旋转扇叶
   setInterval(() => {
@@ -84,21 +80,23 @@ loadTexture("background.png").then((texture) => {
 });
 
 // 添加光源
-const ambientLight = new THREE.AmbientLight("#2f2f2f", 40);
+{
+  const ambientLight = new THREE.AmbientLight("#2f2f2f", 40);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
-directionalLight.position.set(1, 2, 5);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+  directionalLight.position.set(1, 2, 5);
 
-app.scene.add(directionalLight);
-app.scene.add(ambientLight);
+  app.scene.add(directionalLight);
+  app.scene.add(ambientLight);
+}
 
 // 设置剪裁动画
 app.container.addEventListener("pointerdown", () => {
   clipping.cover();
-  clipping2.cover();
+  // clipping2.cover();
 });
 // 抬起播放恢复动画
 app.container.addEventListener("pointerup", () => {
   clipping.restore();
-  clipping2.restore();
+  // clipping2.restore();
 });

@@ -1,22 +1,27 @@
 import * as THREE from "three";
+import OutlineGenerator from "./outline";
 
 const ANIMATE_TIME = 50;
 
 class Clip {
   isAnimating = false;
   animationId = null;
+  scene = null;
   model = null;
   clipPlanes = [];
+  clipLines = []; // 用于记录裁剪面与模型相交的轮廓线段
   renderer = null;
   edgeColor = 0x80deea;
   range = [0, 0];
   step = 0;
 
-  constructor(model, renderer, color) {
+  constructor(scene, model, renderer, color) {
+    this.scene = scene;
     this.model = model;
     this.renderer = renderer;
     this.renderer.localClippingEnabled = true;
     this.edgeColor = color || 0x80deea;
+    this.outline = new OutlineGenerator(model);
     this.init();
   }
 
@@ -42,6 +47,7 @@ class Clip {
       }
 
       this.setConstant(result);
+      this.outline.generateOutline(plane);
       if (result === this.range[isRevert ? +isReStore : +!isReStore])
         return this.stopAnimate();
     }
@@ -102,6 +108,10 @@ class Clip {
         child.material.clipShadows = true;
       }
     });
+
+    // 将剪裁面与模型重叠的轮廓添加到场景中
+    this.model.add(this.outline.outlineLines);
+
   }
 }
 
