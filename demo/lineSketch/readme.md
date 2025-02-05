@@ -198,3 +198,35 @@ TODOList:
 5. 添加 gui
 6. 线条的流转和渐变色
 7. 添加模型参数描述
+
+## 性能相关
+
+```js
+class clip {
+  this.temp = xxx;
+
+  function clip () {
+    this.temp.xx = xx;
+  }
+}
+```
+
+为什么是`temp`不是`const`
+
+避免内存抖动：
+在渲染循环中，这些方法每帧都会被调用
+如果每帧都创建和销毁对象，会导致频繁的垃圾回收
+频繁的垃圾回收会造成性能抖动
+
+## plane与模型的坐标问题
+```js
+// 假设模型被缩放了2倍并移动到(10,0,0)
+model.scale.set(2, 2, 2);
+model.position.set(10, 0, 0);
+
+// 切割平面在世界空间中
+clippingPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
+
+// 需要将平面转换到局部空间才能正确计算交点
+// 否则，计算出的交点位置会出错
+```
