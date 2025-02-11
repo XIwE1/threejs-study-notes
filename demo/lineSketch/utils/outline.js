@@ -29,7 +29,7 @@ export default class OutlineGenerator {
     // 初始化BVH
     this.initBVH();
     // 初始化轮廓线对象
-    this.outlineLines = this.initOutlineLines();
+    this.outlines = this.initOutLines();
   }
 
   /**
@@ -46,7 +46,7 @@ export default class OutlineGenerator {
     geometry.boundsTree = this.bvh;
   }
 
-  initOutlineLines() {
+  initOutLines() {
     const lineGeometry = new THREE.BufferGeometry();
     const linePosAttr = new THREE.BufferAttribute(
       new Float32Array(this.options.maxSegments * 3),
@@ -56,19 +56,19 @@ export default class OutlineGenerator {
     linePosAttr.setUsage(THREE.DynamicDrawUsage);
     lineGeometry.setAttribute("position", linePosAttr);
 
-    const outlineLines = new THREE.LineSegments(
+    const outlines = new THREE.LineSegments(
       lineGeometry,
       new THREE.LineBasicMaterial({ color: this.options.color })
     );
-    outlineLines.frustumCulled = false;
-    outlineLines.renderOrder = 3;
+    outlines.frustumCulled = false;
+    outlines.renderOrder = 3;
 
-    outlineLines.scale.copy(this.model.scale);
-    return outlineLines;
+    outlines.scale.copy(this.model.scale);
+    return outlines;
   }
 
   // 根据切割平面 更新 轮廓线对象
-  generateOutline(clippingPlane) {
+  updateOutLines(clippingPlane) {
     // 进行坐标空间转换，将切割平面从世界空间转换到模型的局部空间
     // clippingPlane 是在世界空间中定义的
     // 模型的几何数据（顶点）是在模型的局部空间中定义的
@@ -84,7 +84,7 @@ export default class OutlineGenerator {
     this.temp.plane.copy(clippingPlane).applyMatrix4(this.temp.matrix);
 
     let index = 0;
-    const posAttr = this.outlineLines.geometry.attributes.position;
+    const posAttr = this.outlines.geometry.attributes.position;
 
     // 使用BVH检测相交
     this.bvh.shapecast({
@@ -131,14 +131,14 @@ export default class OutlineGenerator {
     });
 
     // 更新轮廓线显示
-    this.outlineLines.geometry.setDrawRange(0, index);
+    this.outlines.geometry.setDrawRange(0, index);
     // 稍微偏移轮廓线位置，避免与模型表面重叠
-    this.outlineLines.position
+    this.outlines.position
       .copy(clippingPlane.normal)
       .multiplyScalar(-0.00001);
     posAttr.needsUpdate = true;
 
-    return this.outlineLines;
+    return this.outlines;
   }
 
   // 处理三重交点的特殊情况
@@ -166,8 +166,8 @@ export default class OutlineGenerator {
   }
 
   dispose() {
-    this.outlineLines.geometry.dispose();
-    this.outlineLines.material.dispose();
+    this.outlines.geometry.dispose();
+    this.outlines.material.dispose();
     this.bvh = null;
   }
 }

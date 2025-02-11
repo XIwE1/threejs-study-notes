@@ -31,9 +31,9 @@ function dealModel(modelGroup) {
 
   modelGroup.traverse((item) => {
     if (item.isMesh) {
-      const instanceGeometry = item.geometry.clone();
-      instanceGeometry.applyMatrix4(item.matrix);
-      geometries.push(instanceGeometry);
+      const _geometry = item.geometry.clone();
+      _geometry.applyMatrix4(item.matrix);
+      geometries.push(_geometry);
     }
   });
 
@@ -41,11 +41,12 @@ function dealModel(modelGroup) {
     mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
   }
 
+  const mergedMesh = new THREE.Mesh(mergedGeometry, new THREE.MeshBasicMaterial());
   // mergedMesh.position.y = -3.3
   // mergedMesh.quaternion.identity();
-  // mergedMesh.applyMatrix4(gltf.scene.matrix)
+  // mergedMesh.applyMatrix4(modelGroup.matrix)
   // mergedMesh.updateMatrixWorld(true);
-  return new THREE.Mesh(mergedGeometry, new THREE.MeshBasicMaterial());
+  return mergedMesh;
 }
 
 export { throttle, debounce, dealModel };

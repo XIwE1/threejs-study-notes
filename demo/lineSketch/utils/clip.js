@@ -47,7 +47,7 @@ class Clip {
       }
 
       this.setConstant(result);
-      this.outline.generateOutline(plane);
+      this.outline.updateOutLines(plane);
       if (result === this.range[isRevert ? +isReStore : +!isReStore])
         return this.stopAnimate();
     }
@@ -110,7 +110,7 @@ class Clip {
     });
 
     // 将剪裁面与模型重叠的轮廓添加到场景中
-    this.model.add(this.outline.outlineLines);
+    this.model.add(this.outline.outlines);
 
   }
 }
