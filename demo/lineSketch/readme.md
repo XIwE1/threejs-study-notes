@@ -198,6 +198,12 @@ TODOList:
 5. 添加 gui
 6. 线条的流转和渐变色
 7. 添加模型参数描述
+8. edge线条更加明亮
+
+
+`updateMatrixWorld`非常重要，位移 旋转 缩放后一定得调用一次
+.applyMatrix4 ( matrix : Matrix4 ) : undefined
+对当前物体应用这个变换矩阵，并更新物体的位置、旋转和缩放。
 
 ## 性能相关
 
