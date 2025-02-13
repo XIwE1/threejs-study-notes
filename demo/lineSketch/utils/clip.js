@@ -9,19 +9,19 @@ class Clip {
   scene = null;
   model = null;
   clipPlanes = [];
-  clipLines = []; // 用于记录裁剪面与模型相交的轮廓线段
   renderer = null;
   edgeColor = 0x80deea;
   range = [0, 0];
   step = 0;
+  options = {};
 
-  constructor(scene, model, renderer, color) {
+  constructor(scene, model, renderer, options = {}) {
     this.scene = scene;
     this.model = model;
     this.renderer = renderer;
+    this.options = options;
     this.renderer.localClippingEnabled = true;
-    this.edgeColor = color || 0x80deea;
-    this.outline = new OutlineGenerator(model);
+    this.edgeColor = options.color || 0x80deea;
     this.init();
   }
 
@@ -47,7 +47,7 @@ class Clip {
       }
 
       this.setConstant(result);
-      this.outline.updateOutLines(plane);
+      this.outline && this.outline.updateOutLines(plane);
       if (result === this.range[isRevert ? +isReStore : +!isReStore])
         return this.stopAnimate();
     }
@@ -88,6 +88,12 @@ class Clip {
   init() {
     if (!this.model) return;
 
+    // 将剪裁面与模型重叠的轮廓添加到场景中
+    if (this.options.outline) {
+      this.outline = new OutlineGenerator(this.model);
+      this.scene.add(this.outline.outlines);
+    }
+
     // 获取模型边界
     const x_range = computedRange(this.model);
     this.range = x_range;
@@ -108,9 +114,6 @@ class Clip {
         child.material.clipShadows = true;
       }
     });
-
-    // 将剪裁面与模型重叠的轮廓添加到场景中
-    this.scene.add(this.outline.outlines)
   }
 }
 

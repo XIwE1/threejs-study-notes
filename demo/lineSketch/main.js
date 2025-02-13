@@ -22,55 +22,57 @@ loadModel("gpu.glb").then((glb) => {
   model.scale.set(2, 2, 2);
   model.position.x = 2;
   app.scene.add(model);
-  clipping = new Clip(app.scene, model, app.renderer);
+  clipping = new Clip(app.scene, model, app.renderer, { outline: true });
 
   // 根据模型生成边缘轮廓
-  const meshs = [];
-  const fanMeshs = [];
-  const fanName = [
-    "left_darker_Black_Plastic_001_0",
-    "Plane_darker_Black_Plastic_001_0",
-    "Plane044_darker_Black_Plastic_001_0",
-    "left002_darker_Black_Plastic_001_0",
-  ];
+  {
+    const meshs = [];
+    const fanMeshs = [];
+    const fanName = [
+      "left_darker_Black_Plastic_001_0",
+      "Plane_darker_Black_Plastic_001_0",
+      "Plane044_darker_Black_Plastic_001_0",
+      "left002_darker_Black_Plastic_001_0",
+    ];
 
-  model.traverse((item) => {
-    if (item.isMesh) {
-      fanName.includes(item.name) ? fanMeshs.push(item) : meshs.push(item);
-    }
-  });
-
-  const sketchInfos = getSketchInfos(meshs);
-  const _sketchInfos = getSketchInfos(fanMeshs);
-  const sketch = createSketch(sketchInfos);
-  const _sketch = createSketch(_sketchInfos, "lightgreen", 0.8);
-
-  // app.scene.add(sketch);
-  // app.scene.add(_sketch);
-
-  const sketchGroup = new THREE.Group();
-  sketchGroup.add(sketch);
-  sketchGroup.add(_sketch);
-  // app.scene.add(sketchGroup);
-
-  // clipping2 = new Clip(app.scene, sketchGroup, app.renderer);
-  // clipping2.invert();
-
-  const box = new THREE.Box3().setFromObject(sketchGroup);
-  const helper = new THREE.Box3Helper(box, 0xffff00);
-  app.scene.add(helper);
-
-  const helpers = new THREE.Group();
-  helpers.add(new THREE.PlaneHelper(clipping.clipPlanes[0], 2, 0xff0000));
-  helpers.visible = true;
-  app.scene.add(helpers);
-
-  // 旋转扇叶
-  setInterval(() => {
-    _sketch.children.forEach((item) => {
-      item.rotation.z += 0.2;
+    model.traverse((item) => {
+      if (item.isMesh) {
+        fanName.includes(item.name) ? fanMeshs.push(item) : meshs.push(item);
+      }
     });
-  }, 16);
+
+    const sketchInfos = getSketchInfos(meshs);
+    const _sketchInfos = getSketchInfos(fanMeshs);
+    const sketch = createSketch(sketchInfos);
+    const _sketch = createSketch(_sketchInfos, "lightgreen", 0.8);
+
+    // app.scene.add(sketch);
+    // app.scene.add(_sketch);
+
+    const sketchGroup = new THREE.Group();
+    sketchGroup.add(sketch);
+    sketchGroup.add(_sketch);
+    app.scene.add(sketchGroup);
+
+    clipping2 = new Clip(app.scene, sketchGroup, app.renderer);
+    clipping2.invert();
+
+    const box = new THREE.Box3().setFromObject(sketchGroup);
+    const helper = new THREE.Box3Helper(box, 0xffff00);
+    app.scene.add(helper);
+
+    const helpers = new THREE.Group();
+    helpers.add(new THREE.PlaneHelper(clipping.clipPlanes[0], 2, 0xff0000));
+    helpers.visible = true;
+    app.scene.add(helpers);
+
+    // 旋转扇叶
+    setInterval(() => {
+      _sketch.children.forEach((item) => {
+        item.rotation.z += 0.2;
+      });
+    }, 16);
+  }
 });
 
 // 加载背景贴图
@@ -93,10 +95,10 @@ loadTexture("background.png").then((texture) => {
 // 设置剪裁动画
 app.container.addEventListener("pointerdown", () => {
   clipping.cover();
-  // clipping2.cover();
+  clipping2.cover();
 });
 // 抬起播放恢复动画
 app.container.addEventListener("pointerup", () => {
   clipping.restore();
-  // clipping2.restore();
+  clipping2.restore();
 });
