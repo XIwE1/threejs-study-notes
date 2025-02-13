@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import OutlineGenerator from "./outline";
 
-const ANIMATE_TIME = 50;
+const ANIMATE_TIME = 100;
 
 class Clip {
   isAnimating = false;
@@ -110,8 +110,7 @@ class Clip {
     });
 
     // 将剪裁面与模型重叠的轮廓添加到场景中
-    this.model.add(this.outline.outlines);
-
+    this.scene.add(this.outline.outlines)
   }
 }
 
