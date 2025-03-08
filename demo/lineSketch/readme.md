@@ -183,10 +183,6 @@ function computedRange(model) {
 
 https://threejs.org/examples/#webgl_clipping_intersection
 
-```js
-
-```
-
 removeFromParent 删除原有模型
 
 TODOList:
@@ -198,8 +194,7 @@ TODOList:
 5. 添加 gui
 6. 线条的流转和渐变色
 7. 添加模型参数描述
-8. edge线条更加明亮
-
+8. edge 线条更加明亮
 
 `updateMatrixWorld`非常重要，位移 旋转 缩放后一定得调用一次
 .applyMatrix4 ( matrix : Matrix4 ) : undefined
@@ -224,7 +219,8 @@ class clip {
 如果每帧都创建和销毁对象，会导致频繁的垃圾回收
 频繁的垃圾回收会造成性能抖动
 
-## plane与模型的坐标问题
+## plane 与模型的坐标问题
+
 ```js
 // 假设模型被缩放了2倍并移动到(10,0,0)
 model.scale.set(2, 2, 2);
@@ -236,3 +232,34 @@ clippingPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
 // 需要将平面转换到局部空间才能正确计算交点
 // 否则，计算出的交点位置会出错
 ```
+
+## 通过欧拉角与四元数 灵活的更新物体位置
+
+```js
+// 基于欧拉角改变向量位置
+export const euler2Matrix = (
+  originalVector: Vector3,
+  eulerAngles: Euler,
+  distance = 1
+) => {
+  // 1. 将Euler转换为Quaternion
+  const quaternion = new Quaternion().setFromEuler(eulerAngles);
+
+  // 2. 创建一个单位方向向量（例如沿Z轴）
+  const directionVector = new Vector3(0, 0, 1);
+
+  // 3. 使用Quaternion旋转方向向量
+  directionVector.applyQuaternion(quaternion);
+
+  // 4. 将旋转后的方向向量乘以距离，并将其加到原始向量上
+  const movedVector = originalVector
+    .clone()
+    .addScaledVector(directionVector, distance);
+
+  return movedVector;
+};
+```
+
+我们的目标是让物体沿Z轴发生一定变化，但此时物体可能有自己的旋转角度，结合四元数算出准确更新方式。
+
+比如我原地跳高，和向前跳远，Y轴在计算时 需要物体提供一个欧拉角转换为四元数 再将Y轴的变化通过四元数转换为准确的（XY轴变化），就像跳远是+X+Y 并不是只有+Y
