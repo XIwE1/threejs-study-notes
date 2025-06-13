@@ -40,7 +40,7 @@ const fragmenShader = /* glsl */ `
 varying vec2 v_uv;
   void main() {
     float color_red = step(0.5, v_uv.y);
-    gl_FragColor = vec4(color_red, 0, 0, 1);
+    gl_FragColor = vec4(vec3(v_uv.y), 1);
   }
 `;
 

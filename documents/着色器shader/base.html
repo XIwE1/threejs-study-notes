@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creating a scene</title>
+  </head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./index.js" id="code"></script>
+    <script>
+      const getSourceCode = async (scriptPath) => {
+        try {
+          // 获取脚本相对路径
+          const scriptUrl = new URL(scriptPath, location.href).href;
+
+          // 获取脚本源代码
+          const response = await fetch(scriptUrl);
+
+          if (!response.ok) {
+            throw new Error(
+              `获取脚本失败: ${response.status} ${response.statusText}`
+            );
+          }
+
+          return await response.text();
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      };
+
+      // 使用示例
+      (async () => {
+        const sourceCode = await getSourceCode("./index.js");
+
+        if (sourceCode) {
+          console.log("当前脚本源代码:");
+          console.log(sourceCode);
+
+          // 实际应用场景
+          const codeSize = new Blob([sourceCode]).size;
+          const lineCount = sourceCode.split("\n").length;
+
+          // 代码显示到页面
+          const code_container =
+            window.parent.document.getElementById("code-content");
+          code_container.innerHTML = sourceCode;
+        }
+      })();
+    </script>
+  </body>
+</html>

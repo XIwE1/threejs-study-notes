@@ -1,20 +1,366 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Creating a scene</title>
+    <title>Shader 示例</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+        color: #e6e6e6;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        padding: 30px 0;
+      }
+
+      h1 {
+        font-size: 2.8rem;
+        background: linear-gradient(45deg, #4cc9f0, #4361ee, #3a0ca3);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin-bottom: 15px;
+      }
+
+      .subtitle {
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 0 auto 30px;
+        color: #a9b7c6;
+        line-height: 1.6;
+      }
+
+      .content {
+        display: flex;
+        gap: 30px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .examples-container {
+        flex: 1;
+        min-width: 300px;
+        background: rgba(30, 30, 46, 0.8);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .examples-container h2 {
+        color: #4cc9f0;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(76, 201, 240, 0.3);
+      }
+
+      .example-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+      }
+
+      .example-item {
+        background: rgba(40, 40, 60, 0.6);
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(76, 201, 240, 0.1);
+      }
+
+      .example-item:hover {
+        transform: translateY(-5px);
+        border-color: rgba(76, 201, 240, 0.4);
+        background: rgba(50, 50, 80, 0.7);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .example-item.active {
+        background: rgba(67, 97, 238, 0.2);
+        border-color: #4361ee;
+      }
+
+      .example-item h3 {
+        color: #f8f9fa;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .example-item p {
+        color: #a9b7c6;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .render-container {
+        flex: 2;
+        min-width: 600px;
+        background: rgba(20, 20, 35, 0.7);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        position: relative;
+        height: 70vh;
+      }
+      .code-button {
+        background: transparent;
+        color: white;
+        border: 1px solid grey;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      }
+      #three-canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .stats {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        font-family: monospace;
+        color: #4cc9f0;
+      }
+
+      .controls {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+        color: #f8f9fa;
+        font-size: 0.9rem;
+      }
+
+      .info-panel {
+        background: rgba(58, 12, 163, 0.2);
+        border-left: 4px solid #3a0ca3;
+        padding: 15px;
+        border-radius: 0 8px 8px 0;
+        margin-top: 20px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      .info-panel h3 {
+        color: #f72585;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+      }
+
+      .add-example {
+        background: rgba(67, 97, 238, 0.2);
+        border: 2px dashed #4361ee;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-top: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .add-example:hover {
+        background: rgba(67, 97, 238, 0.4);
+      }
+
+      .add-example h3 {
+        color: #4cc9f0;
+        margin-bottom: 10px;
+      }
+
+      .add-example p {
+        color: #a9b7c6;
+      }
+
+      .code-container {
+        margin-top: 30px;
+        background: rgba(30, 30, 46, 0.8);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .code-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .code-header h2 {
+        color: #4cc9f0;
+      }
+
+      .code-content {
+        background: #1e1e2e;
+        border-radius: 10px;
+        padding: 20px;
+        overflow: auto;
+        max-height: 300px;
+        border: 1px solid rgba(76, 201, 240, 0.2);
+        font-family: "Fira Code", monospace;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
+      @media (max-width: 1000px) {
+        .content {
+          flex-direction: column;
+        }
+
+        .examples-container,
+        .render-container {
+          min-width: 100%;
+        }
+
+        .render-container {
+          height: 50vh;
+        }
+      }
+    </style>
   </head>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-    }
-  </style>
   <body>
-    <div id="app"></div>
-    <script type="module" src="./index.js"></script>
+    <div class="container">
+      <header>
+        <h1>Shader 示例</h1>
+        <a class="subtitle" href="https://juejin.cn/user/1372654389433496/posts"
+          >https://juejin.cn/user/1372654389433496/posts</a
+        >
+      </header>
+
+      <div class="content">
+        <div class="examples-container">
+          <h2>List</h2>
+          <div class="example-list">
+            <div class="example-item active">
+              <h3><i>◻</i> 旋转立方体</h3>
+              <p>一个简单的旋转立方体，展示基本Three.js场景设置</p>
+            </div>
+          </div>
+
+          <div class="add-example">
+            <h3><i>+</i> 添加示例</h3>
+            <p>点击这里添加您自己的Three.js示例到展示容器</p>
+          </div>
+
+          <div class="info-panel">
+            <h3><i>💡</i> 使用说明</h3>
+            <p>1. 点击示例列表中的项目加载对应的Three.js场景</p>
+            <p>2. 在代码区域查看实现代码</p>
+            <p>3. 点击"添加您的示例"将您自己的代码添加到容器</p>
+          </div>
+        </div>
+
+        <div class="render-container">
+          <iframe
+            src="./base.html"
+            frameborder="0"
+            style="width: 100%; height: 100%"
+          ></iframe>
+          <!-- <canvas id="three-canvas"></canvas>
+                <div class="stats">FPS: <span id="fps-counter">60</span> | Triangles: <span id="triangle-counter">12</span></div>
+                <div class="controls">按住鼠标左键拖动旋转场景 | 滚轮缩放</div> -->
+        </div>
+      </div>
+
+      <div class="code-container">
+        <div class="code-header">
+          <h2>Example Code</h2>
+          <div> 
+          <button class="code-button" id="execute-code">运行代码</button>
+          <button class="code-button" id="copy-code">复制代码</button>
+        </div>
+        </div>
+        <div class="code-content" id="code-content">
+          // 旋转立方体示例 function initScene() { // 创建场景 const scene = new
+          THREE.Scene(); scene.background = new THREE.Color(0x0a0a1a); //
+
+      </div>
+    </div>
+
+    <script>
+   
+
+      // 复制代码功能
+      document.getElementById("copy-code").addEventListener("click", () => {
+        const codeContent = document.getElementById("code-content");
+        navigator.clipboard.writeText(codeContent.textContent).then(() => {
+          const originalText = document.getElementById("copy-code").textContent;
+          document.getElementById("copy-code").textContent = "已复制!";
+          setTimeout(() => {
+            document.getElementById("copy-code").textContent = originalText;
+          }, 2000);
+        });
+      });
+
+      // 添加示例功能
+      document.querySelector(".add-example").addEventListener("click", () => {
+        const exampleList = document.querySelector(".example-list");
+        const newExample = document.createElement("div");
+        newExample.className = "example-item";
+        newExample.innerHTML = `
+                <h3><i>🌟</i> 我的自定义示例</h3>
+                <p>点击这里加载您自定义的Three.js示例</p>
+            `;
+
+        // 添加到列表顶部
+        exampleList.insertBefore(newExample, exampleList.firstChild);
+
+        // 设置点击事件
+        newExample.addEventListener("click", function () {
+          // 更新选中状态
+          document.querySelectorAll(".example-item").forEach((i) => {
+            i.classList.remove("active");
+          });
+          this.classList.add("active");
+
+          // 更新代码显示
+          document.getElementById("code-content").textContent =
+            `// 请在此处添加您的Three.js代码\n\n` +
+            `function initMyExample() {\n` +
+            `    // 创建场景、相机和渲染器\n` +
+            `    // 添加您的3D对象和效果\n` +
+            `    // 实现动画逻辑\n` +
+            `}\n\n` +
+            `// 初始化您的场景\n` +
+            `initMyExample();`;
+        });
+
+        // 提示用户
+        alert("已添加新的示例项！请点击该示例项并添加您的Three.js代码。");
+      });
+    </script>
   </body>
 </html>
