@@ -37,6 +37,7 @@ document.body.appendChild(renderer.domElement);
       }
     `;
 
+  // fract重复n次，0.707 是0.5(位移了0.5 + uv界限1.0)斜边的长度
   const fragmenShader = /* glsl */ `
       varying vec2 v_uv;
       void main() {
@@ -72,6 +73,7 @@ document.body.appendChild(renderer.domElement);
       }
     `;
 
+  // sin(u_time) * 0.5 + 0.5 确保 范围在[0, 1]，再 * 0.5 = 不是斜边线的最大距离
   const fragmenShader = /* glsl */ `
       uniform float u_time;
       varying vec2 v_uv;
