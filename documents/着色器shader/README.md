@@ -219,6 +219,8 @@ float color = step(vUv.x, 0.5);
 gl_FragColor = vec4(vec3(fract(vUv.x * 3.0)), 1.0);
 // 条纹
 gl_FragColor = vec4(vec3(step(0.5, fract(vUv.x * 3.0))), 1.0);
+// 乘以正数 = 重复n次
+fract(float * n);
 ```
 
 #### **`length(vec2)` 函数**
@@ -229,6 +231,8 @@ gl_FragColor = vec4(vec3(step(0.5, fract(vUv.x * 3.0))), 1.0);
 
 ```c#
 float dist = length(vUv);
+// 减正数 = 中心点往右上偏移
+float dist = length(vUv - vec2(0.5));
 ```
 
 #### **`sin/cos/tan...` 三角函数**
