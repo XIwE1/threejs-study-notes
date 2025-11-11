@@ -50,6 +50,8 @@ renderCamera = camera;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(_innerWidth, _innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.needsUpdate = true;
+renderer.shadowMap.autoUpdate = true;
 renderer.setPixelRatio(window.devicePixelRatio);
 // renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;

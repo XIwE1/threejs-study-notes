@@ -1797,6 +1797,11 @@ text-hex@1.0.x:
   resolved "https://registry.npmmirror.com/text-hex/-/text-hex-1.0.0.tgz#69dc9c1b17446ee79a92bf5b884bb4b9127506f5"
   integrity sha512-uuVGNWzgJ4yhRaNSiubPY7OjISw4sw4E5Uv0wbjp+OzcbmVU/rsT8ujgcXJhn9ypzsgr5vlzpPqP+MBBKcGvbg==
 
+three-mesh-bvh@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.npmmirror.com/three-mesh-bvh/-/three-mesh-bvh-0.9.0.tgz#7642b08e089d58c484491203013a867a9619678d"
+  integrity sha512-xAwZj0hZknpwVsdK5BBJTIAZDjDPZCRzURY1o+z/JHBON/jc2UetK1CzPeQZiiOVSfI4jV2z7sXnnGtgsgnjaA==
+
 three@^0.164.1:
   version "0.164.1"
   resolved "https://registry.yarnpkg.com/three/-/three-0.164.1.tgz#b742f76bd8dfd3736ba0d86a12dfddb73c5cdcc0"
